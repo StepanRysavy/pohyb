@@ -23,18 +23,29 @@
 
 	P.__animate = function (animation) {
 
-		for (var key in animation.values.now) {
-			if (animation.values.now.hasOwnProperty(key)) {
-				// alert(key + " -> " + p[key]);
+		if (P.__now > animation.timeEnd) {
+			animation.values.now = P.__translate(animation.values.to);
+		} else {
+			if (P.__now > animation.timeStart && animation.run === false) {
 
-				if (P.__now > animation.timeEnd) {
-					animation.values.now[key] = animation.values.to[key];
-				} else {
-					animation.values.now[key] = animation.values.from[key] + animation.ease(
-						animation.values.from[key], 
-						animation.values.to[key],
-						(P.__now - animation.timeStart) / animation.duration
-					);
+				animation.run = true;
+
+				animation.values.from = P.__translate(animation.settings.from || P.get(animation.of, animation.settings.to));
+				animation.values.now = P.__translate(animation.settings.from || P.get(animation.of, animation.settings.to));
+				animation.values.to = P.__translate(animation.settings.to || P.get(animation.of, animation.settings.from));
+				
+			}
+
+			if (animation.run === true) {
+
+				for (var key in animation.values.now) {
+					if (animation.values.now.hasOwnProperty(key)) {
+						animation.values.now[key] = animation.values.from[key] + animation.ease(
+							animation.values.from[key], 
+							animation.values.to[key],
+							(P.__now - animation.timeStart) / animation.duration
+						);
+					}
 				}
 
 			}
@@ -46,6 +57,7 @@
 	P.__check = function (animation) {
 
 		if (animation.timeEnd < P.__now) {
+			animation.run = false;
 			P.__debug("End", animation.of);
 			P.__anims.splice(P.__anims.indexOf(animation), 1);
 		}
@@ -89,6 +101,7 @@
 		animation.of = symbol;
 		animation.time = time;
 		animation.delay = to.delay || 0;
+		animation.run = false;
 
 		animation.timeStart = now + animation.delay * 1000;
 		animation.timeEnd = animation.timeStart + animation.time * 1000;
@@ -96,11 +109,11 @@
 
 		animation.ease = to.ease || E.linear;
 
-		animation.values = {}
+		animation.values = {};
 
-		animation.values.from = P.__translate(from || P.get(symbol, to));
-		animation.values.now = P.__translate(from || P.get(symbol, to));
-		animation.values.to = P.__translate(to || P.get(symbol, from));
+		animation.settings = {};
+		animation.settings.from = from;
+		animation.settings.to = to;
 
 		P.__addAnim(animation);
 

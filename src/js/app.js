@@ -12,9 +12,6 @@
     };
 
     P.to($(".square"), 2, {left: 100});
-
-    setTimeout(function () {
-    	P.to($(".square"), 2, {left: 0});
-    }, 3000);
+    P.to($(".square"), 2, {left: 0, delay: 3});
     
 })(window, Pohyb, Cas);
