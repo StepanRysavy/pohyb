@@ -1,68 +1,109 @@
-(function (W, undefined) {
+(function (undefined) {
 	"use strict";
 
-	window = W;
+	window = window || {};
 
-	var P = {},
-		E = {},
+	var E = window.PohybEase = {
+			helpers: {},
+			functions: {},
+			ease: {}
+		},
+		P = window.Pohyb = {
+			__easeLibrary: E,
+			__anims: [],
+			__now: undefined,
+			__defaultEasing: undefined
+		},
 		R = window.requestAnimationFrame,
 		RC = window.cancelAnimationFrame,
 		C = window.Cas = {};
 
-	E.ease = function (from, to, progress, options) {
+	E.helpers.__bezier = function(t, p0, p1, p2, p3){
+		var cX = 3 * (p1.x - p0.x),
+			bX = 3 * (p2.x - p1.x) - cX,
+			aX = p3.x - p0.x - cX - bX;
 
-		var power = 1.30,
-			ease = 0,
-			breakpoint = 50;
+		var cY = 3 * (p1.y - p0.y),
+			bY = 3 * (p2.y - p1.y) - cY,
+			aY = p3.y - p0.y - cY - bY;
 
-		if (options) {
-			power = options.power || power;
-			ease = options.ease || ease;
-			breakpoint = options.breakpoint || breakpoint;
-		}
+		var x = (aX * Math.pow(t, 3)) + (bX * Math.pow(t, 2)) + (cX * t) + p0.x;
+		var y = (aY * Math.pow(t, 3)) + (bY * Math.pow(t, 2)) + (cY * t) + p0.y;
 
-		progress *= 100;
+		return {x: x, y: y};
+	};
 
-		if (progress === 0 || progress === 100) {
-			progress = progress;
+	E.functions.bezier = function (from, to, progress, options) {
+
+		if (progress === 0) return from;
+		if (progress === 1) return to;
+
+		if (options.points) {
+			progress = E.helpers.__bezier(
+				progress,
+				options.points[0],
+				options.points[1],
+				options.points[2],
+				options.points[3]
+			).y / 100;
 		} else {
-			if (ease === 0) {
-				if (progress < breakpoint) {
-					progress = breakpoint - Math.pow(Math.pow(breakpoint, power) - Math.pow(progress, power), 1/power);
-				} else {
-					progress = 100 - Math.pow(Math.pow(Math.abs(breakpoint - 100), 1/power) - Math.pow(progress - breakpoint, 1/power), power);
-				}
-			} else if (ease === -1) {
-				progress = 100 - Math.pow(Math.pow(100, 1/power) - Math.pow(progress, 1/power), power);
-			} else {
-				progress = 100 - Math.pow(Math.pow(100, power) - Math.pow(progress, power), 1/power);
-			}
-		}
+			progress = progress;
+		}		
 
-		return (to - from) * (progress / 100);
+		return (to - from) * (progress);
 	};
 
-	E.linear = function (from, to, progress) {
-		return E.ease(from, to, progress, {power: 1});
+	E.ease.linear = function (from, to, progress, config) {
+		config = {}.extend(config || {});
+
+		return {fce: E.functions.bezier, config: config};
 	};
 
-	E.easeOut = function (from, to, progress, config) {
-		return E.ease(from, to, progress, extend({power: 1.3, ease: 1}, config || {}));
+	E.ease.easeOut = function (from, to, progress, config) {
+		var defaults = {
+				points: [
+					{x: 0, 	 y: 0},
+					{x: 0,   y: 100},
+					{x: 0,   y: 100},
+					{x: 100, y: 100}
+				]
+			};
+
+		config = defaults.extend(config || {});
+		
+		return {fce: E.functions.bezier, config: config};
 	};
 
-	E.easeIn = function (from, to, progress, config) {
-		return E.ease(from, to, progress, extend({power: 1.3, ease: -1}, config || {}));
+	E.ease.easeIn = function (from, to, progress, config) {
+		var defaults = {
+				points: [
+					{x: 0, 	 y: 0},
+					{x: 100, y: 0},
+					{x: 100, y: 0},
+					{x: 100, y: 100}
+				]
+			};
+
+		config = defaults.extend(config || {});
+		
+		return {fce: E.functions.bezier, config: config};
 	};
 
-	E.easeInOut = function (from, to, progress, config) {
-		return E.ease(from, to, progress, extend({power: 1.3, breakpoint: 30}, config || {})); 
-	}
+	E.ease.easeInOut = function (from, to, progress, config) {
+		var defaults = {
+				points: [
+					{x: 0, 	 y: 0},
+					{x: 100, y: 0},
+					{x: 0,   y: 100},
+					{x: 100, y: 100}
+				]
+			};
 
-	P = window.Pohyb = {
-		__easeLibrary: E,
-		__anims: [],
-		__now: undefined,
-		__defaultEasing: E.easeInOut
+		config = defaults.extend(config || {});
+
+		// if (!config.points) config.points = defaults.points;
+		
+		return {fce: E.functions.bezier, config: config};
 	};
 
 	P.__debug = function () {
@@ -88,10 +129,11 @@
 
 				for (var key in animation.values.now) {
 					if (animation.values.now.hasOwnProperty(key)) {
-						animation.values.now[key] = animation.values.from[key] + animation.ease(
+						animation.values.now[key] = animation.values.from[key] + animation.ease.fce(
 							animation.values.from[key], 
 							animation.values.to[key],
-							(P.__now - animation.timeStart) / animation.duration
+							(P.__now - animation.timeStart) / animation.duration,
+							animation.ease.config
 						);
 					}
 				}
@@ -155,7 +197,41 @@
 		animation.timeEnd = animation.timeStart + animation.time * 1000;
 		animation.duration = animation.time * 1000;
 
-		animation.ease = to.ease || P.__defaultEasing;
+		if (to.ease) {
+
+			if (typeof to.ease === "string") {
+				if (E.ease[to.ease]()) {
+					animation.ease = E.ease[to.ease]();
+				} else {
+					animation.ease = P.__defaultEasing();
+				}
+			} else if (typeof to.ease === "function") {
+				animation.ease = {
+					fce: to.ease().fce,
+					config: {}
+				}
+			} else if (typeof to.ease === "object") {
+				if (to.ease.fce && to.ease.config) {
+					animation.ease = to.ease;
+				} else if (to.ease.fce) {
+					animation.ease = {
+						fce: to.ease.fce,
+						config: {}
+					}
+				} else if (to.ease.config) {
+					animation.ease = {
+						fce: P.__defaultEasing().fce,
+						config: to.ease.config
+					}
+				} else {
+					animation.ease = P.__defaultEasing();
+				}
+			} else {
+				animation.ease = P.__defaultEasing();
+			}
+		} else {
+			animation.ease = P.__defaultEasing();
+		}
 
 		animation.values = {};
 
@@ -213,4 +289,8 @@
 		}
 	};
 
-})(window || {});
+	(function () {
+		P.__defaultEasing = P.__easeLibrary.ease.easeInOut;
+	})(); 
+
+})();
