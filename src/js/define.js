@@ -3,22 +3,76 @@
 
 	window = window || {};
 
-	var E = window.PohybEase = {
+	var E = {
 			helpers: {},
 			functions: {},
 			ease: {}
 		},
+		S = {
+			helpers: {},
+			functions: {},
+			maps: {}
+		},
 		P = window.Pohyb = {
-			__easeLibrary: E,
+			__easing: E,
+			__params: S,
 			__anims: [],
 			__now: undefined,
-			__defaultEasing: undefined
+			__defaultEasing: undefined,
+			__threshold: 0.01
 		},
 		R = window.requestAnimationFrame,
 		RC = window.cancelAnimationFrame,
 		C = window.Cas = {};
 
-	E.helpers.__bezier = function(t, p0, p1, p2, p3){
+	S.helpers.__map = function (name, to, defaults) {
+
+		var args;
+
+		S.maps[name] = {
+			get: function () {
+
+				args = Array.prototype.slice.call(arguments)
+				args.unshift(name);
+				args.push(defaults);
+
+				return S.functions[to].get.apply(this, args);
+			},
+			set: function () {
+
+				args = Array.prototype.slice.call(arguments)
+				args.unshift(name);
+
+				S.functions[to].set.apply(this, args);
+			}
+		}
+	};
+
+	S.map = S.helpers.map = function (arr, to, defaults) {
+		for (var i=0; i<arr.length; i++) {
+			S.helpers.__map(arr[i], to, defaults);
+		}
+	};
+
+	S.functions.val = {
+		get: function () {
+			return (arguments[1].style[arguments[0]] && arguments[1].style[arguments[0]] != "") ? Number(arguments[1].style[arguments[0]]) : (arguments[2] || 0);
+		},
+		set: function () {
+			arguments[1].style[arguments[0]] = arguments[2];
+		}
+	};
+
+	S.functions.px = {
+		get: function () {
+			return (arguments[1].style[arguments[0]]) ? Number(arguments[1].style[arguments[0]].split("px")[0]) : (arguments[2] || 0);
+		},
+		set: function () {
+			arguments[1].style[arguments[0]] = arguments[2] + "px";
+		}
+	};
+
+	E.helpers.bezier = function(t, p0, p1, p2, p3){
 		var cX = 3 * (p1.x - p0.x),
 			bX = 3 * (p2.x - p1.x) - cX,
 			aX = p3.x - p0.x - cX - bX;
@@ -35,11 +89,11 @@
 
 	E.functions.bezier = function (from, to, progress, options) {
 
-		if (progress === 0) return from;
-		if (progress === 1) return to;
+		if (progress < P.__threshold) progress = 0;
+		if (progress > 1 - P.__threshold) progress = 1;
 
-		if (options.points) {
-			progress = E.helpers.__bezier(
+		if (options.points && progress > 0 && progress < 1) {
+			progress = E.helpers.bezier(
 				progress,
 				options.points[0],
 				options.points[1],
@@ -54,7 +108,8 @@
 	};
 
 	E.ease.linear = function (from, to, progress, config) {
-		config = {}.extend(config || {});
+
+		config = defaults.extend(config || {});
 
 		return {fce: E.functions.bezier, config: config};
 	};
@@ -114,10 +169,24 @@
 
 		if (P.__now > animation.timeEnd) {
 			animation.values.now = P.__translate(animation.values.to);
+
+			if (animation.onComplete) animation.onComplete();
+			
+			animation.run = false;
+
+			P.__anims.splice(P.__anims.indexOf(animation), 1);
+
+			if (P.__anims.length === 0) {
+				P.__debug("End animation");
+				RC(P.__tick);
+			}
+
 		} else {
 			if (P.__now > animation.timeStart && animation.run === false) {
 
 				animation.run = true;
+
+				if (animation.onStart) animation.onStart();
 
 				animation.values.from = P.__translate(animation.settings.from || P.get(animation.of, animation.settings.to));
 				animation.values.now = P.__translate(animation.settings.from || P.get(animation.of, animation.settings.to));
@@ -138,25 +207,12 @@
 					}
 				}
 
+				if (animation.onUpdate) animation.onUpdate();
+
 			}
 		}
 
 		P.set(animation.of, animation.values.now);
-	};
-
-	P.__check = function (animation) {
-
-		if (animation.timeEnd < P.__now) {
-			animation.run = false;
-			P.__debug("End", animation.of);
-			P.__anims.splice(P.__anims.indexOf(animation), 1);
-		}
-
-		if (P.__anims.length === 0) {
-			P.__debug("End animation");
-			RC(P.__tick);
-		}
-
 	};
 
 	P.__tick = function () {
@@ -165,7 +221,6 @@
 
 		P.__anims.forEach(function (animation) {
 			P.__animate(animation);
-			P.__check(animation);
 		});
 
 		R(P.__tick);
@@ -237,7 +292,11 @@
 
 		animation.settings = {};
 		animation.settings.from = from;
-		animation.settings.to = to;
+		animation.settings.to = to; 
+
+		animation.onStart = from ? from.onStart : to ? to.onStart : undefined;
+		animation.onUpdate = from ? from.onUpdate : to ? to.onUpdate : undefined;
+		animation.onComplete = from ? from.onComplete : to ? to.onComplete : undefined;
 
 		P.__addAnim(animation);
 
@@ -248,22 +307,21 @@
 
 		for (var key in params) {
 			if (params.hasOwnProperty(key)) {
-
-				if (key === "left") symbol.style.left = params[key] + "px";
-				if (key === "top") symbol.style.top = params[key] + "px";
-				if (key === "opacity") symbol.style.opacity = params[key];
-
+				if (S.maps[key]) S.maps[key].set(symbol, params[key]);
 			}
 		}
+
 	};
 
 	P.get = function (symbol, params) {
 
 		var o = {};
 
-		if (params.left !== undefined) o.left = (symbol.style.left) ? Number(symbol.style.left.split("px")[0]) : 0;
-		if (params.top !== undefined) o.top = (symbol.style.top) ? Number(symbol.style.top.split("px")[0]) : 0;
-		if (params.opacity !== undefined) o.opacity = (symbol.style.opacity) ? Number(symbol.style.opacity) : 1;
+		for (var key in S.maps) {
+			if (S.maps.hasOwnProperty(key)) {
+				if (params[key] !== undefined) o[key] = S.maps[key].get(symbol);
+			}
+		}
 
 		return o;
 	};
@@ -290,7 +348,11 @@
 	};
 
 	(function () {
-		P.__defaultEasing = P.__easeLibrary.ease.easeInOut;
+		P.__defaultEasing = P.__easing.ease.easeInOut;
+
+		S.map(["left", "right", "top", "bottom"], "px", 0);
+		S.map(["opacity"], "val", 1);
+
 	})(); 
 
 })();
