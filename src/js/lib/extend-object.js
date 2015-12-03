@@ -5,3 +5,7 @@ function extend (target, source) {
     });
     return a;
 };
+
+Object.prototype.extend = function (source) {
+	return extend(this, source);
+}
