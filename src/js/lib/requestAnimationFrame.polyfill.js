@@ -5,7 +5,6 @@
  * © Polyfiller 2015
  * Released under the MIT license
  * github.com/Polyfiller/requestAnimationFrame
- */
 window.requestAnimationFrame || function (window) {
 
     'use strict';
@@ -47,3 +46,5 @@ window.requestAnimationFrame || function (window) {
        };
 
 }(this);
+
+ */
