@@ -13,10 +13,10 @@
 			functions: {},
 			maps: {}
 		},
-		P = window.Pohyb = {
-			__easing: E,
-			__params: S,
-			__anims: [],
+		P = window._pohybDebugFile = {
+			easing: E,
+			parameters: S,
+			tweens: [],
 			__now: undefined,
 			__defaultEasing: undefined,
 			__threshold: 0.01
@@ -25,7 +25,35 @@
 		RC = window.cancelAnimationFrame,
 		C = window.Cas = {};
 
-	S.helpers.__map = function (name, to, defaults) {
+
+
+	E.addFunction = function (name, cb) {
+		E.functions[name] = cb;
+
+		return cb;
+	}
+
+	E.addHelper = function (name, cb) {
+		E.helpers[name] = cb;
+
+		return cb;
+	}
+
+	E.addEasing = function (name, cb) {
+		E.ease[name] = cb;
+
+		return cb;
+	}
+
+	E.getEasing = function (name) {
+		return E.functions[name];
+	}
+
+	E.setDefault = function (easing) {
+		P.__defaultEasing = easing;
+	}
+
+	S.helpers.map = function (name, to, defaults, propertyName) {
 
 		var args;
 
@@ -34,7 +62,7 @@
 
 				args = Array.prototype.slice.call(arguments)
 				args.unshift(name);
-				args.push(defaults);
+				args.push(defaults, propertyName || name);
 
 				return S.functions[to].get.apply(this, args);
 			},
@@ -42,124 +70,30 @@
 
 				args = Array.prototype.slice.call(arguments)
 				args.unshift(name);
+				args.push(propertyName || name);
 
 				S.functions[to].set.apply(this, args);
 			}
 		}
 	};
 
-	S.map = S.helpers.map = function (arr, to, defaults) {
+	S.addParameter = function (arr, to, defaults, propertyName) {
 		for (var i=0; i<arr.length; i++) {
-			S.helpers.__map(arr[i], to, defaults);
+			S.helpers.map(arr[i], to, defaults, propertyName);
 		}
 	};
 
-	S.functions.val = {
-		get: function () {
-			return (arguments[1].style[arguments[0]] && arguments[1].style[arguments[0]] != "") ? Number(arguments[1].style[arguments[0]]) : (arguments[2] || 0);
-		},
-		set: function () {
-			arguments[1].style[arguments[0]] = arguments[2];
-		}
-	};
+	S.addFunction = function (name, obj) {
+		S.functions[name] = obj;
 
-	S.functions.px = {
-		get: function () {
-			return (arguments[1].style[arguments[0]]) ? Number(arguments[1].style[arguments[0]].split("px")[0]) : (arguments[2] || 0);
-		},
-		set: function () {
-			arguments[1].style[arguments[0]] = arguments[2] + "px";
-		}
-	};
+		return obj;
+	}
 
-	E.helpers.bezier = function(t, p0, p1, p2, p3){
-		var cX = 3 * (p1.x - p0.x),
-			bX = 3 * (p2.x - p1.x) - cX,
-			aX = p3.x - p0.x - cX - bX;
+	S.addHelper = function (name, cb) {
+		S.helpers[name] = cb;
 
-		var cY = 3 * (p1.y - p0.y),
-			bY = 3 * (p2.y - p1.y) - cY,
-			aY = p3.y - p0.y - cY - bY;
-
-		var x = (aX * Math.pow(t, 3)) + (bX * Math.pow(t, 2)) + (cX * t) + p0.x;
-		var y = (aY * Math.pow(t, 3)) + (bY * Math.pow(t, 2)) + (cY * t) + p0.y;
-
-		return {x: x, y: y};
-	};
-
-	E.functions.bezier = function (from, to, progress, options) {
-
-		if (progress < P.__threshold) progress = 0;
-		if (progress > 1 - P.__threshold) progress = 1;
-
-		if (options.points && progress > 0 && progress < 1) {
-			progress = E.helpers.bezier(
-				progress,
-				options.points[0],
-				options.points[1],
-				options.points[2],
-				options.points[3]
-			).y / 100;
-		} else {
-			progress = progress;
-		}		
-
-		return (to - from) * (progress);
-	};
-
-	E.ease.linear = function (from, to, progress, config) {
-
-		config = defaults.extend(config || {});
-
-		return {fce: E.functions.bezier, config: config};
-	};
-
-	E.ease.easeOut = function (from, to, progress, config) {
-		var defaults = {
-				points: [
-					{x: 0, 	 y: 0},
-					{x: 0,   y: 100},
-					{x: 0,   y: 100},
-					{x: 100, y: 100}
-				]
-			};
-
-		config = defaults.extend(config || {});
-		
-		return {fce: E.functions.bezier, config: config};
-	};
-
-	E.ease.easeIn = function (from, to, progress, config) {
-		var defaults = {
-				points: [
-					{x: 0, 	 y: 0},
-					{x: 100, y: 0},
-					{x: 100, y: 0},
-					{x: 100, y: 100}
-				]
-			};
-
-		config = defaults.extend(config || {});
-		
-		return {fce: E.functions.bezier, config: config};
-	};
-
-	E.ease.easeInOut = function (from, to, progress, config) {
-		var defaults = {
-				points: [
-					{x: 0, 	 y: 0},
-					{x: 100, y: 0},
-					{x: 0,   y: 100},
-					{x: 100, y: 100}
-				]
-			};
-
-		config = defaults.extend(config || {});
-
-		// if (!config.points) config.points = defaults.points;
-		
-		return {fce: E.functions.bezier, config: config};
-	};
+		return cb;
+	}
 
 	P.__debug = function () {
 		console.log(arguments);
@@ -168,16 +102,18 @@
 	P.__animate = function (animation) {
 
 		if (P.__now > animation.timeEnd) {
-			animation.values.now = P.__translate(animation.values.to);
+			animation.values.now = animation.values.to;
 
 			if (animation.onComplete) animation.onComplete();
 			
 			animation.run = false;
+			
+			P.__debug("End animation", animation.of);
 
-			P.__anims.splice(P.__anims.indexOf(animation), 1);
+			P.tweens.splice(P.tweens.indexOf(animation), 1);
 
-			if (P.__anims.length === 0) {
-				P.__debug("End animation");
+			if (P.tweens.length === 0) {
+				P.__debug("End animation engine");
 				RC(P.__tick);
 			}
 
@@ -188,9 +124,11 @@
 
 				if (animation.onStart) animation.onStart();
 
-				animation.values.from = P.__translate(animation.settings.from || P.get(animation.of, animation.settings.to));
-				animation.values.now = P.__translate(animation.settings.from || P.get(animation.of, animation.settings.to));
-				animation.values.to = P.__translate(animation.settings.to || P.get(animation.of, animation.settings.from));
+				P.__debug("Start animation", animation.of);
+
+				animation.values.from = animation.settings.from || P.get(animation.of, animation.settings.to);
+				animation.values.now = animation.settings.from || P.get(animation.of, animation.settings.to);
+				animation.values.to = animation.settings.to || P.get(animation.of, animation.settings.from);
 
 			}
 
@@ -198,10 +136,11 @@
 
 				for (var key in animation.values.now) {
 					if (animation.values.now.hasOwnProperty(key)) {
+
 						animation.values.now[key] = animation.values.from[key] + animation.ease.fce(
+							(P.__now - animation.timeStart) / animation.duration,
 							animation.values.from[key], 
 							animation.values.to[key],
-							(P.__now - animation.timeStart) / animation.duration,
 							animation.ease.config
 						);
 					}
@@ -219,25 +158,17 @@
 
 		P.__now = Date.now();
 
-		P.__anims.forEach(function (animation) {
+		P.tweens.forEach(function (animation) {
 			P.__animate(animation);
 		});
 
 		R(P.__tick);
 	};
 
-	P.__addAnim = function (animation) {
-		P.__anims.push(animation);
-	};
-
-	P.__translate = function (params) {
-		return params;
-	};
-
 	P.__create = function (symbol, time, from, to, now) {
 
-		if (P.__anims.length === 0) {
-			P.__debug("Start animation");
+		if (P.tweens.length === 0) {
+			P.__debug("Start animation engine");
 			R(P.__tick);
 		}
 
@@ -262,8 +193,8 @@
 				}
 			} else if (typeof to.ease === "function") {
 				animation.ease = {
-					fce: to.ease().fce,
-					config: {}
+					fce: to.ease().fce || to.ease,
+					config: to.ease().config || {}
 				}
 			} else if (typeof to.ease === "object") {
 				if (to.ease.fce && to.ease.config) {
@@ -298,9 +229,9 @@
 		animation.onUpdate = from ? from.onUpdate : to ? to.onUpdate : undefined;
 		animation.onComplete = from ? from.onComplete : to ? to.onComplete : undefined;
 
-		P.__addAnim(animation);
+		P.tweens.push(animation);
 
-		P.__debug("New", animation.of);
+		P.__debug("Set", animation.of);
 	};
 
 	P.set = function (symbol, params) {
@@ -347,12 +278,32 @@
 		}
 	};
 
-	(function () {
-		P.__defaultEasing = P.__easing.ease.easeInOut;
+	P.setTreshold = function (value) {
+		P.__threshold = value;
+	}
 
-		S.map(["left", "right", "top", "bottom"], "px", 0);
-		S.map(["opacity"], "val", 1);
+	window.Pohyb = {
+		to: P.to,
+		from: P.from,
+		fromTo: P.fromTo,
 
-	})(); 
+		get: P.get,
+		set: P.set,
+
+		addEasingHelper: E.addHelper,
+		addEasingFunction: E.addFunction,
+		addEasing: E.addEasing,
+
+		addParametersHelper: S.addHelper,
+		addParametersFunctions: S.addFunction,
+		addParameters: S.addParameter,
+
+		getEasing: E.getEasing,
+		getTreshold: function () {return P.__threshold},
+
+		setDefaultEasing: E.setDefault,
+		setTreshold: P.setTreshold
+	}
+
 
 })();
