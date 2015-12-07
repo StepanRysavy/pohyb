@@ -22,8 +22,7 @@
 			__threshold: 0.01
 		},
 		R = window.requestAnimationFrame,
-		RC = window.cancelAnimationFrame,
-		C = window.Cas = {};
+		RC = window.cancelAnimationFrame;
 
 
 
@@ -148,10 +147,10 @@
 
 				if (animation.onUpdate) animation.onUpdate();
 
+				P.set(animation.of, animation.values.now);
+
 			}
 		}
-
-		P.set(animation.of, animation.values.now);
 	};
 
 	P.__tick = function () {
@@ -170,6 +169,16 @@
 		if (P.tweens.length === 0) {
 			P.__debug("Start animation engine");
 			R(P.__tick);
+		}
+
+		if (to === undefined) {
+			to = P.get(symbol, from);			
+			if (from.ease) to.ease = from.ease;
+			if (from.delay) to.delay = from.delay; 
+		}
+
+		if (from !== undefined) {
+			P.set(symbol, from);
 		}
 
 		var animation = {};
@@ -232,9 +241,13 @@
 		P.tweens.push(animation);
 
 		P.__debug("Set", animation.of);
+
+		return animation;
 	};
 
 	P.set = function (symbol, params) {
+
+		console.log("Set", symbol, params);
 
 		for (var key in params) {
 			if (params.hasOwnProperty(key)) {
@@ -262,7 +275,8 @@
 	};
 
 	P.from = function (symbol, time, from) {
-		P.fromTo(symbol, time, from, undefined);
+		var animation = P.fromTo(symbol, time, from, undefined);
+		P.set(symbol, P.get(symbol, animation.settings.from));
 	};
 
 	P.fromTo = function (symbol, time, from, to) {
@@ -271,10 +285,10 @@
 
 		if (symbol.length) {
 			symbol.forEach(function (s) {
-				P.__create(s, time, from, to, now);
+				return P.__create(s, time, from, to, now);
 			});
 		} else {
-			P.__create(symbol, time, from, to, now);
+			return P.__create(symbol, time, from, to, now);
 		}
 	};
 
@@ -282,7 +296,7 @@
 		P.__threshold = value;
 	}
 
-	window.Pohyb = {
+	window.Pohyb = window.Tween = {
 		to: P.to,
 		from: P.from,
 		fromTo: P.fromTo,
