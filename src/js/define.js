@@ -100,6 +100,10 @@
 
 	P.__animate = function (animation) {
 
+		if (animation.time === 0) {
+			animation.values.now = animation.values.to = animation.settings.to;
+		}
+
 		if (P.__now > animation.timeStart + animation.duration) {
 
 			for (var key in animation.values.now) {
@@ -108,11 +112,13 @@
 				}
 			}
 
+			P.set(animation.of, animation.values.to);
+
 			if (animation.onComplete) animation.onComplete();
 			
 			animation.run = false;
 			
-			P.__debug("End animation", animation.of, animation.progress);
+			P.__debug("End animation", animation.of, animation);
 
 			P.tweens.splice(P.tweens.indexOf(animation), 1);
 
@@ -128,7 +134,7 @@
 
 				if (animation.onStart) animation.onStart();
 
-				P.__debug("Start animation", animation.of, P.__now);
+				P.__debug("Start animation", animation.of, Date(P.__now));
 
 				animation.values.from = animation.settings.from || P.get(animation.of, animation.settings.to);
 				animation.values.to = animation.settings.to || P.get(animation.of, animation.settings.from);
@@ -278,7 +284,11 @@
 			animation.suspend = false;
 		};
 
-		console.log(animation);
+		animation.offset = function (offset) {
+			animation.timeStart += offset * 1000;
+		};
+
+		// console.log(animation);
 
 		return animation;
 	};
@@ -338,6 +348,8 @@
 
 		get: P.get,
 		set: P.set,
+
+		offset: P.offset,
 
 		addEasingHelper: E.addHelper,
 		addEasingFunction: E.addFunction,
