@@ -205,7 +205,6 @@
 		animation.suspend = false;
 
 		animation.timeStart = now + animation.delay * 1000;
-		animation.timeEnd = animation.timeStart + animation.time * 1000;
 		animation.duration = animation.time * 1000;
 		animation.progress = 0;
 
@@ -262,11 +261,19 @@
 		animation.pause = function () {
 			P.__debug("Pause", animation.of);
 			animation.suspend = true;
+
+			var now = P.__now || Date.now();
+
+			if (animation.progress === 0 && now < animation.timeStart) {
+				animation.delayStartBy = animation.timeStart - now;
+			}
 		};
 
 		animation.play = function () {
 
-			animation.timeStart = P.__now - (animation.duration * animation.progress);
+			if (animation.delayStartBy) P.__debug("Suspended start by", animation.delayStartBy);
+
+			animation.timeStart = P.__now - (animation.duration * animation.progress) + (animation.delayStartBy || 0);
 			P.__debug("Start", animation.of, animation.progress); 
 			animation.suspend = false;
 		};

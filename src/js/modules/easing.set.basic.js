@@ -5,7 +5,7 @@
 
 	lib.linear = Pohyb.addEasing("linear", function (from, to, progress, config) {
 
-		config = defaults.extend(config || {});
+		config = {}.extend(config || {});
 
 		return {fce: Pohyb.getEasing("bezier"), config: config};
 	});
@@ -55,6 +55,6 @@
 		return {fce: Pohyb.getEasing("bezier"), config: config};
 	});
 
-	Pohyb.setDefaultEasing(lib.easeInOut);
+	Pohyb.setDefaultEasing(lib.linear);
 	
 })(Pohyb);
