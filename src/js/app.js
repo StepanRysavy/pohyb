@@ -11,8 +11,14 @@
     	}
     };
 
-    var p = Pohyb.from($(".square"), 3, {left: 150, delay: 2});
-    p.pause();
-    setTimeout(p.play, 1000);
+    var tl = new Cas();
+    tl.to($(".square"), 1, {left: 150});
+    tl.to($(".circle"), 1, {left: 100});
+    tl.to($(".text"), 1, {fontSize: 20});
+    tl.set($(".circle"), {opacity: .5}, -.5);
+    tl.to($(".square"), 1, {left: 250, opacity: .2});
+
+    setTimeout(tl.pause, 750);
+    setTimeout(tl.play, 1500);
 
 })();

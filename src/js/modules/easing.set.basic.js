@@ -55,6 +55,6 @@
 		return {fce: Pohyb.getEasing("bezier"), config: config};
 	});
 
-	Pohyb.setDefaultEasing(lib.linear);
+	Pohyb.setDefaultEasing(lib.easeInOut);
 	
 })(Pohyb);
