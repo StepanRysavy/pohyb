@@ -100,14 +100,19 @@
 
 	P.__animate = function (animation) {
 
-		if (P.__now > animation.timeEnd) {
-			animation.values.now = animation.values.to;
+		if (P.__now > animation.timeStart + animation.duration) {
+
+			for (var key in animation.values.now) {
+				if (animation.values.now.hasOwnProperty(key)) {
+					animation.values.to[key] = animation.values.now[key];
+				}
+			}
 
 			if (animation.onComplete) animation.onComplete();
 			
 			animation.run = false;
 			
-			P.__debug("End animation", animation.of);
+			P.__debug("End animation", animation.of, animation.progress);
 
 			P.tweens.splice(P.tweens.indexOf(animation), 1);
 
@@ -123,21 +128,31 @@
 
 				if (animation.onStart) animation.onStart();
 
-				P.__debug("Start animation", animation.of);
+				P.__debug("Start animation", animation.of, P.__now);
 
 				animation.values.from = animation.settings.from || P.get(animation.of, animation.settings.to);
-				animation.values.now = animation.settings.from || P.get(animation.of, animation.settings.to);
 				animation.values.to = animation.settings.to || P.get(animation.of, animation.settings.from);
+				animation.values.now = {};
+				
+				var backup = P.get(animation.of, animation.settings.to);
+
+				for (var key in animation.values.to) {
+					if (animation.values.to.hasOwnProperty(key)) {
+						animation.values.now[key] = animation.values.from ? animation.values.from[key] : backup[key];
+					}
+				}
 
 			}
 
-			if (animation.run === true) {
+			if (animation.run === true && animation.suspend === false) {
+
+				animation.progress = (P.__now - animation.timeStart) / animation.duration;
 
 				for (var key in animation.values.now) {
 					if (animation.values.now.hasOwnProperty(key)) {
 
 						animation.values.now[key] = animation.values.from[key] + animation.ease.fce(
-							(P.__now - animation.timeStart) / animation.duration,
+							animation.progress,
 							animation.values.from[key], 
 							animation.values.to[key],
 							animation.ease.config
@@ -187,10 +202,12 @@
 		animation.time = time;
 		animation.delay = to.delay || 0;
 		animation.run = false;
+		animation.suspend = false;
 
 		animation.timeStart = now + animation.delay * 1000;
 		animation.timeEnd = animation.timeStart + animation.time * 1000;
 		animation.duration = animation.time * 1000;
+		animation.progress = 0;
 
 		if (to.ease) {
 
@@ -242,12 +259,24 @@
 
 		P.__debug("Set", animation.of);
 
+		animation.pause = function () {
+			P.__debug("Pause", animation.of);
+			animation.suspend = true;
+		};
+
+		animation.play = function () {
+
+			animation.timeStart = P.__now - (animation.duration * animation.progress);
+			P.__debug("Start", animation.of, animation.progress); 
+			animation.suspend = false;
+		};
+
+		console.log(animation);
+
 		return animation;
 	};
 
 	P.set = function (symbol, params) {
-
-		console.log("Set", symbol, params);
 
 		for (var key in params) {
 			if (params.hasOwnProperty(key)) {
@@ -271,12 +300,11 @@
 	};
 
 	P.to = function (symbol, time, to) {
-		P.fromTo(symbol, time, undefined, to);
+		return P.fromTo(symbol, time, undefined, to);
 	};
 
 	P.from = function (symbol, time, from) {
-		var animation = P.fromTo(symbol, time, from, undefined);
-		P.set(symbol, P.get(symbol, animation.settings.from));
+		return P.fromTo(symbol, time, from, undefined);
 	};
 
 	P.fromTo = function (symbol, time, from, to) {
