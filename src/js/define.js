@@ -63,7 +63,9 @@
 				args.unshift(name);
 				args.push(defaults, propertyName || name);
 
-				return S.functions[to].get.apply(this, args);
+				var getter = S.functions[to].get.apply(this, args);
+
+				return getter;
 			},
 			set: function () {
 
@@ -79,7 +81,9 @@
 				args.unshift(name);
 				args.push(defaults, propertyName || name);
 
-				return S.functions[to].parse.apply(this, args);
+				var parser = S.functions[to].parse.apply(this, args);
+
+				return parser;
 
 			}
 		}

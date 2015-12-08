@@ -1,7 +1,7 @@
 (function (Pohyb, undefined) {
 	if (!Pohyb) return;
 
-	Pohyb.addParametersFunctions("shorthand", {
+	Pohyb.addParametersFunctions("shorthand-4", {
 		get: function () {
 
 			var value, result, a = arguments;
@@ -41,7 +41,49 @@
 			return [a, a, a, a];
 		}
 	});
+
+	Pohyb.addParametersFunctions("shorthand-2", {
+		get: function () {
+
+			var value, result, a = arguments;
+
+			value = window.getComputedStyle(a[1],null)[a[0]].split(" ");
+
+			result = [
+				Number(value[0].split("px")[0]) || 0,
+				Number(value[1].split("px")[0]) || 0
+			];
+
+			return result;
+			
+		},
+		set: function () {
+
+			var result = arguments[2][0] + "px " + arguments[2][1] + "px";
+
+			arguments[1].style[arguments[0]] = result;
+		},
+		parse: function () {
+			var a = arguments[1];
+
+			if (typeof a === "string") {
+				a = a.split(" ");
+				a.forEach(function (value, index) {
+					a[index] = Number(a[index].split("px")[0]);
+				});
+			}
+
+			if (typeof a === "object") {
+				if (a.length === 1) return [a[0], a[0]];
+
+				return a;
+			}
+
+			return [a, a];
+		}
+	});
 	
-	Pohyb.addParameters(["padding", "margin"], "shorthand", 0);
+	Pohyb.addParameters(["padding", "margin"], "shorthand-4", 0);
+	Pohyb.addParameters(["backgroundPosition", "transformOrigin"], "shorthand-2", 0);
 
 })(Pohyb);

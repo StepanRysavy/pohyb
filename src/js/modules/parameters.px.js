@@ -33,5 +33,6 @@
 	Pohyb.addParameters(["left", "right", "top", "bottom"], "px", 0);
 	Pohyb.addParameters(["fontSize", "letterSpacing", "lineHeight"], "px", 0);
 	Pohyb.addParameters(["minWidth", "minHeight", "maxWidth", "maxHeight"], "px", 0);
+	Pohyb.addParameters(["backgroundPositionX", "backgroundPositionY"], "px", 0);
 
 })(Pohyb);
