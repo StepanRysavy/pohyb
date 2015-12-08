@@ -72,6 +72,15 @@
 				args.push(propertyName || name);
 
 				S.functions[to].set.apply(this, args);
+			},
+			parse: function () {
+
+				args = Array.prototype.slice.call(arguments)
+				args.unshift(name);
+				args.push(defaults, propertyName || name);
+
+				return S.functions[to].parse.apply(this, args);
+
 			}
 		}
 	};
@@ -100,44 +109,32 @@
 
 	P.__animate = function (animation) {
 
-		if (animation.time === 0) {
-			animation.values.now = animation.values.to = animation.settings.to;
-		}
+		if (animation.suspend === true) return;
 
 		if (P.__now > animation.timeStart + animation.duration) {
 
-			for (var key in animation.values.now) {
-				if (animation.values.now.hasOwnProperty(key)) {
-					animation.values.to[key] = animation.values.now[key];
-				}
-			}
-
-			P.set(animation.of, animation.values.to);
+			P.set(animation.of, P.parse(animation.settings.to));
 
 			if (animation.onComplete) animation.onComplete();
 			
 			animation.run = false;
-			
-			P.__debug("End animation", animation.of, animation);
 
 			P.tweens.splice(P.tweens.indexOf(animation), 1);
 
 			if (P.tweens.length === 0) {
-				P.__debug("End animation engine");
 				RC(P.__tick);
 			}
 
 		} else {
+
 			if (P.__now > animation.timeStart && animation.run === false) {
 
 				animation.run = true;
 
 				if (animation.onStart) animation.onStart();
 
-				P.__debug("Start animation", animation.of, Date(P.__now));
-
-				animation.values.from = animation.settings.from || P.get(animation.of, animation.settings.to);
-				animation.values.to = animation.settings.to || P.get(animation.of, animation.settings.from);
+				animation.values.from = P.parse(animation.settings.from) || P.get(animation.of, animation.settings.to);
+				animation.values.to = P.parse(animation.settings.to) || P.get(animation.of, animation.settings.from);
 				animation.values.now = {};
 				
 				var backup = P.get(animation.of, animation.settings.to);
@@ -150,25 +147,30 @@
 
 			}
 
-			if (animation.run === true && animation.suspend === false) {
+			if (animation.run === true) {
 
 				animation.progress = (P.__now - animation.timeStart) / animation.duration;
 
 				for (var key in animation.values.now) {
 					if (animation.values.now.hasOwnProperty(key)) {
 
-						animation.values.now[key] = animation.values.from[key] + animation.ease.fce(
-							animation.progress,
-							animation.values.from[key], 
-							animation.values.to[key],
-							animation.ease.config
-						);
+						animation.values.now[key] = [];
+
+						animation.values.from[key].forEach(function (value, index) {
+							animation.values.now[key][index] = value + animation.ease.fce(
+								animation.progress,
+								value, 
+								animation.values.to[key][index],
+								animation.ease.config
+							);
+						});
 					}
 				}
 
 				if (animation.onUpdate) animation.onUpdate();
 
 				P.set(animation.of, animation.values.now);
+
 
 			}
 		}
@@ -188,7 +190,6 @@
 	P.__create = function (symbol, time, from, to, now) {
 
 		if (P.tweens.length === 0) {
-			P.__debug("Start animation engine");
 			R(P.__tick);
 		}
 
@@ -262,10 +263,7 @@
 
 		P.tweens.push(animation);
 
-		P.__debug("Set", animation.of);
-
 		animation.pause = function () {
-			P.__debug("Pause", animation.of);
 			animation.suspend = true;
 
 			var now = P.__now || Date.now();
@@ -277,10 +275,7 @@
 
 		animation.play = function () {
 
-			if (animation.delayStartBy) P.__debug("Suspended start by", animation.delayStartBy);
-
 			animation.timeStart = P.__now - (animation.duration * animation.progress) + (animation.delayStartBy || 0);
-			P.__debug("Start", animation.of, animation.progress); 
 			animation.suspend = false;
 		};
 
@@ -288,9 +283,22 @@
 			animation.timeStart += offset * 1000;
 		};
 
-		// console.log(animation);
-
 		return animation;
+	};
+
+	P.parse = function (params) {
+
+		if (params === undefined) return undefined;
+
+		var o = {};
+
+		for (var key in S.maps) {
+			if (S.maps.hasOwnProperty(key)) {
+				if (params[key] !== undefined) o[key] = S.maps[key].parse(params[key]);
+			}
+		}
+
+		return o;
 	};
 
 	P.set = function (symbol, params) {
