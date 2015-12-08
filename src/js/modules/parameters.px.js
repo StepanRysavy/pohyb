@@ -19,7 +19,7 @@
 			var a = arguments[1];
 
 			if (typeof a === "array") return a;
-			if (typeof a === "string") return [Number(a[i].split("px")[0])];
+			if (typeof a === "string") return [Number(a.split("px")[0])];
 
 			return [a];
 		}
