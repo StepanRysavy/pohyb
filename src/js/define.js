@@ -68,7 +68,7 @@
 
 				var getter = S.functions[to].get.apply(this, args);
 
-				// console.log ("Getter", args, getter);
+				console.log ("Getter", getter);
 
 				return getter;
 			},
@@ -78,7 +78,7 @@
 				args.unshift(name);
 				args.push(propertyName);
 
-				// console.log ("Setter", args[2]);
+				console.log ("Setter", args[2]);
 
 				S.functions[propertyName || to].set.apply(this, args);
 			},
@@ -90,7 +90,7 @@
 
 				var parser = S.functions[to].parse.apply(this, args);
 
-				console.log ("Parser", args, parser);
+				console.log ("Parser", parser);
 
 				return parser;
 

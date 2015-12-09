@@ -12,8 +12,8 @@
     };
 
     var tl = new Cas();
-    tl.to($(".square"), 1, {left: 100, width: 200, opacity: .5, margin: 10});
-    tl.to($(".transformator"), 1, {transform: [2, 2, 50, 0, 0]});
-    tl.to($(".transformator"), 1, {scale: .5, rotate: 90}); 
+    // tl.to($(".square"), 1, {left: 100, width: 200, opacity: .5, margin: 10});
+    tl.to($(".transformator"), 1, {matrix: [2, 0, 0, 2, 0, 0]});
+    tl.to($(".transformator"), 1, {scale: .5, rotate: 10}); 
 
 })();

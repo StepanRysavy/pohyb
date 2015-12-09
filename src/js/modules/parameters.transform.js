@@ -19,21 +19,13 @@
 
 			value = value.split("matrix(")[1].split(")")[0].split(", ");
 
-			// result = [
-			// 	{value: Number(value[0]), unit: undefined},	
-			// 	{value: Number(value[1]), unit: undefined},	
-			// 	{value: Number(value[2]), unit: undefined},		
-			// 	{value: Number(value[3]), unit: undefined},		
-			// 	{value: Number(value[4]), unit: undefined},		
-			// 	{value: Number(value[5]), unit: undefined}				
-			// ];
-
 			result = [
-				{value: 1, unit: defaults.unit},	// scaleX
-				{value: 1, unit: defaults.unit},	// scaleY
-				{value: 0, unit: "deg"},			// rotation
-				{value: 0, unit: "px"},				// translateX
-				{value: 0, unit: "px"}				// translateY
+				{value: Number(value[0]), unit: undefined},	
+				{value: Number(value[1]), unit: undefined},	
+				{value: Number(value[2]), unit: undefined},		
+				{value: Number(value[3]), unit: undefined},		
+				{value: Number(value[4]), unit: undefined},		
+				{value: Number(value[5]), unit: undefined}				
 			];
 
 			return result;
@@ -43,20 +35,14 @@
 			lastTransform = [];
 			args = arguments[2];
 
-			lastTransform.push("scale(" + args[0].value + ", " + args[1].value + ")");
-			lastTransform.push("rotate(" + args[2].value + "deg)");
-			lastTransform.push("translate(" + args[3].value + "px, " + args[4].value + "px)");
+			lastTransform[0] = args[0].value;
+			lastTransform[1] = args[1].value; 
+			lastTransform[2] = args[2].value;
+			lastTransform[3] = args[3].value;
+			lastTransform[4] = args[4].value;
+			lastTransform[5] = args[5].value;
 
-			lastTransform = lastTransform.join(" ");
-
-			// lastTransform[0] = args[0].value;
-			// lastTransform[1] = args[1].value;
-			// lastTransform[2] = args[2].value;
-			// lastTransform[3] = args[3].value;
-			// lastTransform[4] = args[4].value + "px";
-			// lastTransform[5] = args[5].value + "px";
-
-			// lastTransform = "matrix(" + lastTransform.join(", ") + ")";
+			lastTransform = "matrix(" + lastTransform.join(", ") + ")";
 
 			console.log(lastTransform);
 
@@ -67,24 +53,28 @@
 				b = undefined,
 				c,
 				type = arguments[0], 
-				parsed = [{value: undefined, unit: defaults.unit}, {value: undefined, unit: defaults.unit}, {value: undefined, unit: defaults.unit}, {value: undefined, unit: defaults.unit}, {value: undefined, unit: defaults.unit}];
+				matrix = Matrix.create([
+					[1,0,0],
+					[0,1,0],
+					[0,0,1]
+				]),
+				parsed = [
+					{value: undefined, unit: undefined},
+					{value: undefined, unit: undefined},
+					{value: undefined, unit: undefined},
+					{value: undefined, unit: undefined},
+					{value: undefined, unit: undefined},
+					{value: undefined, unit: undefined}
+				];
 
-			if (typeof a === "object" && a.length == 5 && type === "transform") {
+			if (typeof a === "object" && a.length == 6 && type === "matrix") {
+
 				parsed[0].value = a[0];
 				parsed[1].value = a[1];
 				parsed[2].value = a[2];
 				parsed[3].value = a[3];
 				parsed[4].value = a[4];
-
-				return parsed;
-			}
-
-			if (type === "transform" && typeof a != "object") {
-				parsed[0].value = a;
-				parsed[1].value = a;
-				parsed[2].value = a;
-				parsed[3].value = a;
-				parsed[4].value = a;
+				parsed[5].value = a[5];
 
 				return parsed;
 			}
@@ -106,52 +96,63 @@
 					}
 
 					if (type === "scaleX") {
-						parsed[0].value = Number(c);
+						// parsed[0].value = Number(c);
 					}
 					if (type === "scaleY") {
-						parsed[1].value = Number(c);
+						// parsed[1].value = Number(c);
 					}
 					if (type === "rotate") {
-						parsed[2].value = Number(c);
+
+						c = Number(c) * 180 / Math.PI;
+
+						matrix = matrix.x(Matrix.create([
+							[Math.cos(c), -Math.sin(c), 0],
+							[Math.sin(c), Math.cos(c), 0],
+							[0, 0, 1]
+						]));
+
 					}
 					if (type === "translateX") {
-						parsed[3].value = Number(c);
+						// parsed[3].value = Number(c);
 					}
 					if (type === "translateY") {
-						parsed[4].value = Number(c);
+						// parsed[4].value = Number(c);
 					}
 
 					if (type === "scale") {
 
-						if (b === undefined) {
-							parsed[0].value = Number(c);
-							parsed[1].value = Number(c);
-						} else {
-							parsed[0].value = Number(b[0]);
-							parsed[1].value = Number(b[1]);
-						}
+						matrix = matrix.x(Matrix.create([
+							[Number(c), 0, 0],
+							[0, Number(c), 0],
+							[0, 0, 1]
+						]));
 						
 					}
 
 					if (type === "translate") {
 
-						if (b === undefined) {
-							parsed[3].value = Number(c);
-							parsed[4].value = Number(c);
-						} else {
-							parsed[3].value = Number(b[0]);
-							parsed[4].value = Number(b[1]);
-						}
+						matrix = matrix.x(Matrix.create([
+							[1, 0, Number(c)],
+							[0, 1, Number(c)],
+							[0, 0, 1]
+						]));
 					}
 				}
 			}
+
+			parsed[0].value = matrix.elements[0][0];
+			parsed[1].value = matrix.elements[0][1];
+			parsed[2].value = matrix.elements[1][0];
+			parsed[3].value = matrix.elements[1][1];
+			parsed[4].value = matrix.elements[2][1];
+			parsed[5].value = matrix.elements[2][2];
 
 			return parsed;
 		}
 	});
 	
-	Pohyb.addParameters(["transform"], "transform", 0);
-	Pohyb.addParametersBind(["scale", "scaleX", "scaleY", "rotate", "translate", "translateX", "translateY"], "transform");
+	Pohyb.addParameters(["matrix"], "transform", 0);
+	Pohyb.addParametersBind(["scale", "scaleX", "scaleY", "rotate", "translate", "translateX", "translateY"], "matrix");
 
 })(Pohyb);
 
