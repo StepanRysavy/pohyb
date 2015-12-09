@@ -11,7 +11,8 @@
 		S = {
 			helpers: {},
 			functions: {},
-			maps: {}
+			maps: {},
+			binds: []
 		},
 		P = window._pohybDebugFile = {
 			easing: E,
@@ -57,13 +58,17 @@
 		var args;
 
 		S.maps[name] = {
+			defaults: defaults,
+			to: to,
 			get: function () {
 
 				args = Array.prototype.slice.call(arguments)
 				args.unshift(name);
-				args.push(defaults, propertyName || name);
+				args.push(defaults, propertyName);
 
 				var getter = S.functions[to].get.apply(this, args);
+
+				// console.log ("Getter", args, getter);
 
 				return getter;
 			},
@@ -71,22 +76,46 @@
 
 				args = Array.prototype.slice.call(arguments)
 				args.unshift(name);
-				args.push(propertyName || name);
+				args.push(propertyName);
 
-				S.functions[to].set.apply(this, args);
+				// console.log ("Setter", args[2]);
+
+				S.functions[propertyName || to].set.apply(this, args);
 			},
 			parse: function () {
 
 				args = Array.prototype.slice.call(arguments)
 				args.unshift(name);
-				args.push(defaults, propertyName || name);
+				args.push(defaults, propertyName);
 
 				var parser = S.functions[to].parse.apply(this, args);
+
+				console.log ("Parser", args, parser);
 
 				return parser;
 
 			}
 		}
+	};
+
+	S.getBind = function (name) {
+
+		for (var i=0; i<S.binds.length; i++) {
+			if (S.binds[i].links.indexOf(name) > -1) return S.binds[i].to;
+		}
+
+		return undefined;
+	};
+
+	S.addBind = function (arr, to) {
+		S.binds.push({
+			links: arr,
+			to: to
+		});
+
+		arr.forEach(function (link) {
+			S.helpers.map(link, S.maps[to].to, S.maps[to].defaults, to);
+		});
 	};
 
 	S.addParameter = function (arr, to, defaults, propertyName) {
@@ -160,13 +189,28 @@
 
 						animation.values.now[key] = [];
 
-						animation.values.from[key].forEach(function (value, index) {
-							animation.values.now[key][index] = value + animation.ease.fce(
-								animation.progress,
-								value, 
-								animation.values.to[key][index],
-								animation.ease.config
-							);
+						animation.values.from[key].forEach(function (from, index) {
+
+							if (animation.values.to[key][index].value === undefined) {
+
+								animation.values.now[key][index] = {
+									value: from.value,
+									unit: from.unit
+								};
+
+							} else {
+
+								animation.values.now[key][index] = {
+									value: from.value + animation.ease.fce(
+										animation.progress,
+										from.value, 
+										animation.values.to[key][index].value,
+										animation.ease.config
+									),
+									unit: from.unit
+								};
+							}
+
 						});
 					}
 				}
@@ -294,13 +338,32 @@
 
 		if (params === undefined) return undefined;
 
-		var o = {};
+		var o = {}, binds = [], bindsName = [];
 
 		for (var key in S.maps) {
 			if (S.maps.hasOwnProperty(key)) {
-				if (params[key] !== undefined) o[key] = S.maps[key].parse(params[key]);
+				if (params[key] !== undefined) {
+
+					var binder = S.getBind(key);
+
+					if (binder === undefined) {
+						o[key] = S.maps[key].parse(params[key]);
+					} else if (bindsName.indexOf(binder) === -1) {
+						binds.push({
+							name: binder,
+							list: [{key: key, value: params[key]}]
+						});
+						bindsName.push(binder);
+					} else {
+						binds[bindsName.indexOf(binder)].list.push({key: key, value: params[key]});
+					}					
+				}
 			}
 		}
+
+		binds.forEach(function (link) {
+			o[link.name] = S.maps[link.name].parse(link.list);
+		});
 
 		return o;
 	};
@@ -319,11 +382,32 @@
 
 		var o = {};
 
+		var o = {}, binds = [], bindsName = [];
+
 		for (var key in S.maps) {
 			if (S.maps.hasOwnProperty(key)) {
-				if (params[key] !== undefined) o[key] = S.maps[key].get(symbol);
+				if (params[key] !== undefined) {
+
+					var binder = S.getBind(key);
+
+					if (binder === undefined) {
+						o[key] = S.maps[key].get(symbol);
+					} else if (bindsName.indexOf(binder) === -1) {
+						binds.push({
+							name: binder,
+							list: [{key: key, value: params[key]}]
+						});
+						bindsName.push(binder);
+					} else {
+						binds[bindsName.indexOf(binder)].list.push({key: key, value: params[key]});
+					}					
+				}
 			}
 		}
+
+		binds.forEach(function (link) {
+			o[link.name] = S.maps[link.name].get(symbol);
+		});
 
 		return o;
 	};
@@ -369,6 +453,7 @@
 
 		addParametersHelper: S.addHelper,
 		addParametersFunctions: S.addFunction,
+		addParametersBind: S.addBind,
 		addParameters: S.addParameter,
 
 		getEasing: E.getEasing,

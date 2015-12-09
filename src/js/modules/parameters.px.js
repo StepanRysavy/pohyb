@@ -1,27 +1,34 @@
 (function (Pohyb, undefined) {
 	if (!Pohyb) return;
 
+	var defaults = {
+		unit: "px"
+	}
+
 	Pohyb.addParametersFunctions("px", {
 		get: function () {
 
 			var value, result;
 
 			value = window.getComputedStyle(arguments[1],null)[arguments[0]];
-			result = [Number(value.split("px")[0]) || 0];
+			result = [{
+				value: Number(value.split("px")[0]) || 0,
+				unit: defaults.unit
+			}];
 
 			return result;
 			
 		},
 		set: function () {
-			arguments[1].style[arguments[0]] = arguments[2][0] + "px";
+			arguments[1].style[arguments[0]] = arguments[2][0].value + arguments[2][0].unit;
 		},
 		parse: function () {
 			var a = arguments[1];
 
-			if (typeof a === "array") return a;
-			if (typeof a === "string") return [Number(a.split("px")[0])];
+			if (typeof a === "array") return [{value: a[0], unit: defaults.unit}];
+			if (typeof a === "string") return [{value: Number(a.split("px")[0]), unit: defaults.unit}];
 
-			return [a];
+			return [{value: a, unit: defaults.unit}];
 		}
 	});
 	

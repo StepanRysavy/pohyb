@@ -1,15 +1,19 @@
 (function (Pohyb, undefined) {
 	if (!Pohyb) return;
 
+	var defaults = {
+		unit: false
+	}
+
 	Pohyb.addParametersFunctions("val", {
 		get: function () {
 
 			var value, result;
 
 			value = window.getComputedStyle(arguments[1],null)[arguments[0]];
-			result = Number(value) || 0;
+			result = [{value: Number(value) || 0, unit: defaults.unit}];
 
-			return [result];
+			return result;
 		},
 		set: function () {
 
@@ -18,10 +22,10 @@
 		parse: function () {
 			var a = arguments[1];
 
-			if (typeof a === "array") return a;
-			if (typeof a === "string") return [Number(a)];
+			if (typeof a === "array") return [{value: a[0], unit: defaults.unit}];
+			if (typeof a === "string") return [{value: Number(a), unit: defaults.unit}];
 
-			return [a];
+			return [{value: a, unit: defaults.unit}];
 		}
 	});
 	
