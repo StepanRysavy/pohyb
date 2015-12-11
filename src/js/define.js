@@ -68,7 +68,7 @@
 
 				var getter = S.functions[to].get.apply(this, args);
 
-				console.log ("Getter", getter);
+				// console.log ("Getter", getter);
 
 				return getter;
 			},
@@ -78,7 +78,7 @@
 				args.unshift(name);
 				args.push(propertyName);
 
-				console.log ("Setter", args[2]);
+				// console.log ("Setter", args[2]);
 
 				S.functions[propertyName || to].set.apply(this, args);
 			},
@@ -90,7 +90,7 @@
 
 				var parser = S.functions[to].parse.apply(this, args);
 
-				console.log ("Parser", parser);
+				// console.log ("Parser", args, parser);
 
 				return parser;
 
@@ -146,7 +146,7 @@
 
 		if (P.__now > animation.timeStart + animation.duration) {
 
-			P.set(animation.of, P.parse(animation.settings.to));
+			P.set(animation.of, P.parse(animation.settings.to, animation.of, false));
 
 			if (animation.onComplete) animation.onComplete();
 			
@@ -166,8 +166,8 @@
 
 				if (animation.onStart) animation.onStart();
 
-				animation.values.from = P.parse(animation.settings.from) || P.get(animation.of, animation.settings.to);
-				animation.values.to = P.parse(animation.settings.to) || P.get(animation.of, animation.settings.from);
+				animation.values.from = P.parse(animation.settings.from, animation.of, true) || P.get(animation.of, animation.settings.to);
+				animation.values.to = P.parse(animation.settings.to, animation.of, true) || P.get(animation.of, animation.settings.from);
 				animation.values.now = {};
 				
 				var backup = P.get(animation.of, animation.settings.to);
@@ -334,7 +334,7 @@
 		return animation;
 	};
 
-	P.parse = function (params) {
+	P.parse = function (params, of, calculate) {
 
 		if (params === undefined) return undefined;
 
@@ -347,7 +347,7 @@
 					var binder = S.getBind(key);
 
 					if (binder === undefined) {
-						o[key] = S.maps[key].parse(params[key]);
+						o[key] = S.maps[key].parse(params[key], of, calculate);
 					} else if (bindsName.indexOf(binder) === -1) {
 						binds.push({
 							name: binder,
@@ -362,7 +362,7 @@
 		}
 
 		binds.forEach(function (link) {
-			o[link.name] = S.maps[link.name].parse(link.list);
+			o[link.name] = S.maps[link.name].parse(link.list, of, calculate);
 		});
 
 		return o;
