@@ -68,7 +68,7 @@
            type = arguments[0], 
            element = arguments[2],
            matrix,
-           data = element.dataset || {};
+           data = ((Pohyb.data) ? Pohyb.data(element).get("transform") : element.dataset) || {};
            parsed = [];
 
             for (var i=0;i<6;i++) {
@@ -199,13 +199,11 @@
           [0, 0, 1]
           ]));
 
-        element.dataset = data;
+        (Pohyb.data) ? Pohyb.data(element).set("transform", data) : element.dataset = data;
 
     } else {
 
         matrix = transform.matrix(element).matrix;
-
-        console.log("F :", matrix);
 
     }
 
@@ -217,8 +215,6 @@
     parsed[3].value = c[1][1];
     parsed[4].value = c[0][2];
     parsed[5].value = c[1][2];
-
-    console.log("<-", parsed, matrix);
 
     return parsed;
 }
