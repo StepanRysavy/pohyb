@@ -3,15 +3,22 @@
 
 	var defaults = {
 		unit: undefined
-	}, lastTransform, args;
+	}, lastTransform, args, webkit = false;
 
 	var transform = {
 		matrix: function (el) {
-			var value = window.getComputedStyle(el,null)["transform"], matrix;
-			
-			if (value.indexOf("matrix") === -1) {
-				el.style.transform = "scale(1)";
-				value = window.getComputedStyle(el,null)["transform"];
+			var value, matrix;
+
+      if (window.getComputedStyle(el,null).transform === undefined) webkit = true;
+        
+      value = window.getComputedStyle(el,null)[(webkit === true?"webkitT":"t") + "ransform"];
+
+      console.log(webkit, value);
+
+			if (value === undefined || value.indexOf("matrix") === -1) {
+
+				el.style[(webkit === true?"-webkit-":"") + "transform"] = "matrix(1,0,0,1,0,0)";
+				value = window.getComputedStyle(el,null)[(webkit === true?"webkitT":"t") + "ransform"];
 			}
 
 			value = value.split("matrix(")[1].split(")")[0].split(", ");
@@ -43,8 +50,6 @@
                 result.push({value: value[i], unit: undefined});
             }
 
-            console.log("->", value, matrix);
-
             return result;
 
         },
@@ -58,7 +63,7 @@
 
            lastTransform = "matrix(" + lastTransform.join(", ") + ")";
 
-           arguments[1].style["transform"] = lastTransform;
+           arguments[1].style[(webkit === true?"-webkit-":"") + "transform"] = lastTransform;
         },
         parse: function () {
 
