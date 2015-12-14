@@ -1,7 +1,7 @@
 (function (undefined) {
 	"use strict";
 
-	window = window || {};
+	if (window === undefined) window = window || {};
 
 	var E = {
 			helpers: {},
