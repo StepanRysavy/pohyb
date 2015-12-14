@@ -10,7 +10,10 @@
 
 			var value, result, args = arguments;
 
-			value = getStyle(args[1], args[0] === 'color');
+			value = getStyle(args[1], args[0]);
+
+			console.log(value);
+
 			value = value.split("(")[1].split(")")[0].split(", ");
 
 			result = [{
@@ -59,7 +62,7 @@
 
 	function getStyle(elem, front) {
 
-		var name = front === true ? "color" : "backgroundColor";
+		var name = front;
 
 		if (document.defaultView && document.defaultView.getComputedStyle) {
 			name = name.replace(/([A-Z])/g, "-$1");
@@ -70,7 +73,7 @@
 			return (function (el) { // get a rgb based color on IE
       				var oRG=document.body.createTextRange();
       				oRG.moveToElementText(el);
-      				var iClr=oRG.queryCommandValue(front === true ? "FrontColor" : "BackColor");
+      				var iClr=oRG.queryCommandValue(front === "color" ? "FrontColor" : "BackColor");
 
       				console.log(iClr);
 
