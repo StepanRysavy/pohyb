@@ -13,7 +13,12 @@
 
     var tl = new Cas();
     // tl.to($(".square"), 1, {left: 100, width: 200, opacity: .5, margin: 10});
-    tl.to($(".transformator"), 1, {rotate: 10}); 
+    // tl.to($(".square"), 1, {borderTopColor: "#00ff00"}); 
+    // tl.to($(".text"), 1, {color: "#ff0000"}); 
+
+    tl.to($(".transformator"), 1, {opacity: .5}); 
+
+    return;
     tl.to($(".transformator"), 1, {scaleX: 2}); 
     tl.to($(".transformator"), 1, {rotate: -10});
     tl.to($(".transformator"), 1, {scale: 2});

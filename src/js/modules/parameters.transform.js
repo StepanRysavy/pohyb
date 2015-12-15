@@ -9,16 +9,14 @@
 		matrix: function (el) {
 			var value, matrix;
 
-      if (window.getComputedStyle(el,null).transform === undefined) webkit = true;
+      if (Pohyb.computed(el, "transform") === undefined) webkit = true;
         
-      value = window.getComputedStyle(el,null)[(webkit === true?"webkitT":"t") + "ransform"];
-
-      console.log(webkit, value);
+      value = Pohyb.computed(el, (webkit === true?"webkitT":"t") + "ransform");
 
 			if (value === undefined || value.indexOf("matrix") === -1) {
-
+        el.style[(webkit === true?"-webkit-":"") + "transform-origin"] = "50% 50%";
 				el.style[(webkit === true?"-webkit-":"") + "transform"] = "matrix(1,0,0,1,0,0)";
-				value = window.getComputedStyle(el,null)[(webkit === true?"webkitT":"t") + "ransform"];
+				value = Pohyb.computed(el, (webkit === true?"webkitT":"t") + "ransform");
 			}
 
 			value = value.split("matrix(")[1].split(")")[0].split(", ");

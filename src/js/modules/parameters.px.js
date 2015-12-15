@@ -8,9 +8,14 @@
 	Pohyb.addParametersFunctions("px", {
 		get: function () {
 
-			var value, result;
+			var element = arguments[1], 
+				attribute = arguments[0],
+				value = Pohyb.computed(element, attribute), 
+				position = Pohyb.computed(element, "position"),
+				result;
 
-			value = window.getComputedStyle(arguments[1],null)[arguments[0]];
+			if (position === "static") element.style["position"] = "relative";
+
 			result = [{
 				value: Number(value.split("px")[0]) || 0,
 				unit: defaults.unit
@@ -23,12 +28,12 @@
 			arguments[1].style[arguments[0]] = arguments[2][0].value + arguments[2][0].unit;
 		},
 		parse: function () {
-			var a = arguments[1];
+			var param = arguments[1];
 
-			if (typeof a === "array") return [{value: a[0], unit: defaults.unit}];
-			if (typeof a === "string") return [{value: Number(a.split("px")[0]), unit: defaults.unit}];
+			if (typeof param === "array") return [{value: param[0], unit: defaults.unit}];
+			if (typeof param === "string") return [{value: Number(param.split("px")[0]), unit: defaults.unit}];
 
-			return [{value: a, unit: defaults.unit}];
+			return [{value: param, unit: defaults.unit}];
 		}
 	});
 	

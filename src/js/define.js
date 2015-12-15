@@ -437,6 +437,10 @@
 		P.__threshold = value;
 	}
 
+	P.computed = function (element, attribute) {
+		return window.getComputedStyle(element,null)[attribute];
+	}
+
 	window.Pohyb = window.Tween = {
 		to: P.to,
 		from: P.from,
@@ -460,7 +464,9 @@
 		getTreshold: function () {return P.__threshold},
 
 		setDefaultEasing: E.setDefault,
-		setTreshold: P.setTreshold
+		setTreshold: P.setTreshold,
+
+		computed: P.computed
 	}
 
 
