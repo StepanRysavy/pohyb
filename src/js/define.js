@@ -1,22 +1,22 @@
 (function (undefined) {
 	"use strict";
 
-	if (window === undefined) window = window || {};
+	if (window === undefined) window = {};
 
-	var E = {
+	var Easing = {
 			helpers: {},
 			functions: {},
 			ease: {}
 		},
-		S = {
+		Parameters = {
 			helpers: {},
 			functions: {},
 			maps: {},
 			binds: []
 		},
-		P = window._pohybDebugFile = {
-			easing: E,
-			parameters: S,
+		Pohyb = window._pohybDebugFile = {
+			easing: Easing,
+			parameters: Parameters,
 			tweens: [],
 			__now: undefined,
 			__defaultEasing: undefined,
@@ -27,46 +27,45 @@
 
 
 
-	E.addFunction = function (name, cb) {
-		E.functions[name] = cb;
+	Easing.addFunction = function (name, cb) {
+		Easing.functions[name] = cb;
 
 		return cb;
 	}
 
-	E.addHelper = function (name, cb) {
-		E.helpers[name] = cb;
+	Easing.addHelper = function (name, cb) {
+		Easing.helpers[name] = cb;
 
 		return cb;
 	}
 
-	E.addEasing = function (name, cb) {
-		E.ease[name] = cb;
+	Easing.addEasing = function (name, cb) {
+		Easing.ease[name] = cb;
 
 		return cb;
 	}
 
-	E.getEasing = function (name) {
-		return E.functions[name];
+	Easing.getEasing = function (name) {
+		return Easing.functions[name];
 	}
 
-	E.setDefault = function (easing) {
-		P.__defaultEasing = easing;
+	Easing.setDefault = function (easing) {
+		Pohyb.__defaultEasing = easing;
 	}
 
-	S.helpers.map = function (name, to, defaults, propertyName) {
+	Parameters.helpers.create = function (name, to, defaults, propertyName) {
 
 		var args;
 
-		S.maps[name] = {
+		Parameters.maps[name] = {
 			defaults: defaults,
 			to: to,
 			get: function () {
 
-				args = Array.prototype.slice.call(arguments)
-				args.unshift(name);
-				args.push(defaults, propertyName);
+				args = Array.prototype.slice.call(arguments);
+				args = [].concat(name, args, defaults, propertyName);
 
-				var getter = S.functions[to].get.apply(this, args);
+				var getter = Parameters.functions[to].get.apply(this, args);
 
 				// console.log ("Getter", getter);
 
@@ -74,21 +73,18 @@
 			},
 			set: function () {
 
-				args = Array.prototype.slice.call(arguments)
-				args.unshift(name);
-				args.push(propertyName);
+				args = Array.prototype.slice.call(arguments);
+				args = [].concat(name, args, propertyName);
 
-				// console.log ("Setter", args[2]);
+				args[1].style[args[0]] = Parameters.functions[propertyName || to].set.apply(this, args);
 
-				S.functions[propertyName || to].set.apply(this, args);
 			},
 			parse: function () {
 
-				args = Array.prototype.slice.call(arguments)
-				args.unshift(name);
-				args.push(defaults, propertyName);
+				args = Array.prototype.slice.call(arguments);
+				args = [].concat(name, args, defaults, propertyName);
 
-				var parser = S.functions[to].parse.apply(this, args);
+				var parser = Parameters.functions[to].parse.apply(this, args);
 
 				// console.log ("Parser", args, parser);
 
@@ -98,79 +94,79 @@
 		}
 	};
 
-	S.getBind = function (name) {
+	Parameters.getBind = function (name) {
 
-		for (var i=0; i<S.binds.length; i++) {
-			if (S.binds[i].links.indexOf(name) > -1) return S.binds[i].to;
+		for (var i=0; i<Parameters.binds.length; i++) {
+			if (Parameters.binds[i].links.indexOf(name) > -1) return Parameters.binds[i].to;
 		}
 
 		return undefined;
 	};
 
-	S.addBind = function (arr, to) {
-		S.binds.push({
+	Parameters.addBind = function (arr, to) {
+		Parameters.binds.push({
 			links: arr,
 			to: to
 		});
 
 		arr.forEach(function (link) {
-			S.helpers.map(link, S.maps[to].to, S.maps[to].defaults, to);
+			Parameters.helpers.create(link, Parameters.maps[to].to, Parameters.maps[to].defaults, to);
 		});
 	};
 
-	S.addParameter = function (arr, to, defaults, propertyName) {
+	Parameters.addParameter = function (arr, to, defaults, propertyName) {
 		for (var i=0; i<arr.length; i++) {
-			S.helpers.map(arr[i], to, defaults, propertyName);
+			Parameters.helpers.create(arr[i], to, defaults, propertyName);
 		}
 	};
 
-	S.addFunction = function (name, obj) {
-		S.functions[name] = obj;
+	Parameters.addFunction = function (name, obj) {
+		Parameters.functions[name] = obj;
 
 		return obj;
 	}
 
-	S.addHelper = function (name, cb) {
-		S.helpers[name] = cb;
+	Parameters.addHelper = function (name, cb) {
+		Parameters.helpers[name] = cb;
 
 		return cb;
 	}
 
-	P.__debug = function () {
+	Pohyb.__debug = function () {
 		console.log(arguments);
 	};
 
-	P.__animate = function (animation) {
+	Pohyb.__animate = function (animation) {
 
 		if (animation.suspend === true) return;
 
-		if (P.__now > animation.timeStart + animation.duration) {
+		if (Pohyb.__now > animation.timeStart + animation.duration) {
 
-			P.set(animation.of, P.parse(animation.settings.to, animation.of, false));
+			Pohyb.set(animation.of, Pohyb.parse(animation.settings.to, animation.of, false));
 
 			if (animation.onComplete) animation.onComplete();
 			
 			animation.run = false;
 
-			P.tweens.splice(P.tweens.indexOf(animation), 1);
+			Pohyb.tweens.splice(Pohyb.tweens.indexOf(animation), 1);
 
-			if (P.tweens.length === 0) {
-				RC(P.__tick);
+			if (Pohyb.tweens.length === 0) {
+				RC(Pohyb.__tick);
 			}
 
 		} else {
 
-			if (P.__now > animation.timeStart && animation.run === false) {
+			if (Pohyb.__now > animation.timeStart && animation.run === false) {
 
 				animation.run = true;
 
 				if (animation.onStart) animation.onStart();
 
-				animation.values.from = P.parse(animation.settings.from, animation.of, true) || P.get(animation.of, animation.settings.to);
-				animation.values.to = P.parse(animation.settings.to, animation.of, true) || P.get(animation.of, animation.settings.from);
+				animation.values.from = Pohyb.parse(animation.settings.from, animation.of, true) || Pohyb.get(animation.of, animation.settings.to);
+				animation.values.to = Pohyb.parse(animation.settings.to, animation.of, true) || Pohyb.get(animation.of, animation.settings.from);
 				animation.values.now = {};
 				
-				var backup = P.get(animation.of, animation.settings.to);
+				var backup = Pohyb.get(animation.of, animation.settings.to);
 
 				for (var key in animation.values.to) {
 					if (animation.values.to.hasOwnProperty(key)) {
@@ -182,7 +178,7 @@
 
 			if (animation.run === true) {
 
-				animation.progress = (P.__now - animation.timeStart) / animation.duration;
+				animation.progress = (Pohyb.__now - animation.timeStart) / animation.duration;
 
 				for (var key in animation.values.now) {
 					if (animation.values.now.hasOwnProperty(key)) {
@@ -217,38 +213,38 @@
 
 				if (animation.onUpdate) animation.onUpdate();
 
-				P.set(animation.of, animation.values.now);
+				Pohyb.set(animation.of, animation.values.now);
 
 
 			}
 		}
 	};
 
-	P.__tick = function () {
+	Pohyb.__tick = function () {
 
-		P.__now = Date.now();
+		Pohyb.__now = Date.now();
 
-		P.tweens.forEach(function (animation) {
-			P.__animate(animation);
+		Pohyb.tweens.forEach(function (animation) {
+			Pohyb.__animate(animation);
 		});
 
-		R(P.__tick);
+		R(Pohyb.__tick);
 	};
 
-	P.__create = function (symbol, time, from, to, now) {
+	Pohyb.__create = function (symbol, time, from, to, now) {
 
-		if (P.tweens.length === 0) {
-			R(P.__tick);
+		if (Pohyb.tweens.length === 0) {
+			R(Pohyb.__tick);
 		}
 
 		if (to === undefined) {
-			to = P.get(symbol, from);			
+			to = Pohyb.get(symbol, from);			
 			if (from.ease) to.ease = from.ease;
 			if (from.delay) to.delay = from.delay; 
 		}
 
 		if (from !== undefined) {
-			P.set(symbol, from);
+			Pohyb.set(symbol, from);
 		}
 
 		var animation = {};
@@ -266,10 +262,10 @@
 		if (to.ease) {
 
 			if (typeof to.ease === "string") {
-				if (E.ease[to.ease]()) {
-					animation.ease = E.ease[to.ease]();
+				if (Easing.ease[to.ease]()) {
+					animation.ease = Easing.ease[to.ease]();
 				} else {
-					animation.ease = P.__defaultEasing();
+					animation.ease = Pohyb.__defaultEasing();
 				}
 			} else if (typeof to.ease === "function") {
 				animation.ease = {
@@ -286,17 +282,17 @@
 					}
 				} else if (to.ease.config) {
 					animation.ease = {
-						fce: P.__defaultEasing().fce,
+						fce: Pohyb.__defaultEasing().fce,
 						config: to.ease.config
 					}
 				} else {
-					animation.ease = P.__defaultEasing();
+					animation.ease = Pohyb.__defaultEasing();
 				}
 			} else {
-				animation.ease = P.__defaultEasing();
+				animation.ease = Pohyb.__defaultEasing();
 			}
 		} else {
-			animation.ease = P.__defaultEasing();
+			animation.ease = Pohyb.__defaultEasing();
 		}
 
 		animation.values = {};
@@ -309,12 +305,12 @@
 		animation.onUpdate = from ? from.onUpdate : to ? to.onUpdate : undefined;
 		animation.onComplete = from ? from.onComplete : to ? to.onComplete : undefined;
 
-		P.tweens.push(animation);
+		Pohyb.tweens.push(animation);
 
 		animation.pause = function () {
 			animation.suspend = true;
 
-			var now = P.__now || Date.now();
+			var now = Pohyb.__now || Date.now();
 
 			if (animation.progress === 0 && now < animation.timeStart) {
 				animation.delayStartBy = animation.timeStart - now;
@@ -323,7 +319,7 @@
 
 		animation.play = function () {
 
-			animation.timeStart = P.__now - (animation.duration * animation.progress) + (animation.delayStartBy || 0);
+			animation.timeStart = Pohyb.__now - (animation.duration * animation.progress) + (animation.delayStartBy || 0);
 			animation.suspend = false;
 		};
 
@@ -334,20 +330,20 @@
 		return animation;
 	};
 
-	P.parse = function (params, of, calculate) {
+	Pohyb.parse = function (params, of, calculate) {
 
 		if (params === undefined) return undefined;
 
 		var o = {}, binds = [], bindsName = [];
 
-		for (var key in S.maps) {
-			if (S.maps.hasOwnProperty(key)) {
+		for (var key in Parameters.maps) {
+			if (Parameters.maps.hasOwnProperty(key)) {
 				if (params[key] !== undefined) {
 
-					var binder = S.getBind(key);
+					var binder = Parameters.getBind(key);
 
 					if (binder === undefined) {
-						o[key] = S.maps[key].parse(params[key], of, calculate);
+						o[key] = Parameters.maps[key].parse(params[key], of, calculate);
 					} else if (bindsName.indexOf(binder) === -1) {
 						binds.push({
 							name: binder,
@@ -362,36 +358,36 @@
 		}
 
 		binds.forEach(function (link) {
-			o[link.name] = S.maps[link.name].parse(link.list, of, calculate);
+			o[link.name] = Parameters.maps[link.name].parse(link.list, of, calculate);
 		});
 
 		return o;
 	};
 
-	P.set = function (symbol, params) {
+	Pohyb.set = function (symbol, params) {
 
 		for (var key in params) {
 			if (params.hasOwnProperty(key)) {
-				if (S.maps[key]) S.maps[key].set(symbol, params[key]);
+				if (Parameters.maps[key]) Parameters.maps[key].set(symbol, params[key]);
 			}
 		}
 
 	};
 
-	P.get = function (symbol, params) {
+	Pohyb.get = function (symbol, params) {
 
 		var o = {};
 
 		var o = {}, binds = [], bindsName = [];
 
-		for (var key in S.maps) {
-			if (S.maps.hasOwnProperty(key)) {
+		for (var key in Parameters.maps) {
+			if (Parameters.maps.hasOwnProperty(key)) {
 				if (params[key] !== undefined) {
 
-					var binder = S.getBind(key);
+					var binder = Parameters.getBind(key);
 
 					if (binder === undefined) {
-						o[key] = S.maps[key].get(symbol);
+						o[key] = Parameters.maps[key].get(symbol);
 					} else if (bindsName.indexOf(binder) === -1) {
 						binds.push({
 							name: binder,
@@ -406,67 +402,87 @@
 		}
 
 		binds.forEach(function (link) {
-			o[link.name] = S.maps[link.name].get(symbol);
+			o[link.name] = Parameters.maps[link.name].get(symbol);
 		});
 
 		return o;
 	};
 
-	P.to = function (symbol, time, to) {
-		return P.fromTo(symbol, time, undefined, to);
+	Pohyb.to = function (symbol, time, to) {
+		return Pohyb.fromTo(symbol, time, undefined, to);
 	};
 
-	P.from = function (symbol, time, from) {
-		return P.fromTo(symbol, time, from, undefined);
+	Pohyb.from = function (symbol, time, from) {
+		return Pohyb.fromTo(symbol, time, from, undefined);
 	};
 
-	P.fromTo = function (symbol, time, from, to) {
+	Pohyb.fromTo = function (symbol, time, from, to) {
 
 		var now = Date.now();
 
 		if (symbol.length) {
 			symbol.forEach(function (s) {
-				return P.__create(s, time, from, to, now);
+				return Pohyb.__create(s, time, from, to, now);
 			});
 		} else {
-			return P.__create(symbol, time, from, to, now);
+			return Pohyb.__create(symbol, time, from, to, now);
 		}
 	};
 
-	P.setTreshold = function (value) {
-		P.__threshold = value;
+	Pohyb.setTreshold = function (value) {
+		Pohyb.__threshold = value;
 	}
 
-	P.computed = function (element, attribute) {
+	Pohyb.computed = function (element, attribute) {
 		return window.getComputedStyle(element,null)[attribute];
 	}
 
+	Pohyb.read = function (value, defaultUnit) {
+		return {value: Number(value), unit: defaultUnit || undefined};
+	}
+
+	Pohyb.write = function (obj) {
+		return obj.unit ? obj.value + obj.unit : obj.value
+	}
+
+	Pohyb.split = function (value, unit, defaultValue) {
+		if (unit === undefined) {
+			return Number(value) || (defaultValue || 0);
+		} else {
+			return Number(value.split(unit)[0]) || (defaultValue || 0);
+		}
+	}
+
 	window.Pohyb = window.Tween = {
-		to: P.to,
-		from: P.from,
-		fromTo: P.fromTo,
+		to: Pohyb.to,
+		from: Pohyb.from,
+		fromTo: Pohyb.fromTo,
 
-		get: P.get,
-		set: P.set,
+		get: Pohyb.get,
+		set: Pohyb.set,
 
-		offset: P.offset,
+		read: Pohyb.read,
+		write: Pohyb.write,
+		split: Pohyb.split,
 
-		addEasingHelper: E.addHelper,
-		addEasingFunction: E.addFunction,
-		addEasing: E.addEasing,
+		offset: Pohyb.offset,
 
-		addParametersHelper: S.addHelper,
-		addParametersFunctions: S.addFunction,
-		addParametersBind: S.addBind,
-		addParameters: S.addParameter,
+		addEasingHelper: Easing.addHelper,
+		addEasingFunction: Easing.addFunction,
+		addEasing: Easing.addEasing,
 
-		getEasing: E.getEasing,
-		getTreshold: function () {return P.__threshold},
+		addParametersHelper: Parameters.addHelper,
+		addParametersFunctions: Parameters.addFunction,
+		addParametersBind: Parameters.addBind,
+		addParameters: Parameters.addParameter,
 
-		setDefaultEasing: E.setDefault,
-		setTreshold: P.setTreshold,
+		getEasing: Easing.getEasing,
+		getTreshold: function () {return Pohyb.__threshold},
 
-		computed: P.computed
+		setDefaultEasing: Easing.setDefault,
+		setTreshold: Pohyb.setTreshold,
+
+		computed: Pohyb.computed
 	}
 
 

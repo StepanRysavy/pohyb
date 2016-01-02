@@ -1,31 +1,29 @@
 (function (Pohyb, undefined) {
 	if (!Pohyb) return;
 	
-	var defaults = {
-		unit: false
-	}
+	var defaultUnit = undefined,
+		value,
+		result;
 
 	Pohyb.addParametersFunctions("val", {
-		get: function () {
-
-			var element = arguments[1], attribute = arguments[0], value, result;
+		get: function (attribute, element) {
 
 			value = Pohyb.computed(element, attribute);
-			result = [{value: Number(value) || 0, unit: defaults.unit}];
+
+			result = [Pohyb.read(value)];
 
 			return result;
 		},
-		set: function () {
+		set: function (attribute, element, value) {
 
-			arguments[1].style[arguments[0]] = arguments[2][0].value;
+			return Pohyb.write(value[0]);
+
 		},
-		parse: function () {
-			var a = arguments[1];
+		parse: function (empty, value) {
 
-			if (typeof a === "array") return [{value: a[0], unit: defaults.unit}];
-			if (typeof a === "string") return [{value: Number(a), unit: defaults.unit}];
+			if (typeof value === "array") return [Pohyb.read(value[0])];
 
-			return [{value: a, unit: defaults.unit}];
+			return [Pohyb.read(value)];
 		}
 	});
 	

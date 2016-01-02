@@ -1,59 +1,46 @@
 (function (Pohyb, undefined) {
 	if (!Pohyb) return;
-
-	var defaults = {
-		unit: undefined
-	}
+	
+	var defaultUnit = undefined,
+		value,
+		result,
+		parsed;
 
 	Pohyb.addParametersFunctions("color", {
-		get: function () {
+		get: function (attribute, element) {
 
-			var value, result, args = arguments;
-
-			value = getStyle(args[1], args[0]);
-
-			console.log(value);
+			value = getStyle(element, attribute);
 
 			value = value.split("(")[1].split(")")[0].split(", ");
-
-			result = [{
-				value: Number(value[0]) || 0,
-				unit: defaults.unit
-			}, {
-				value: Number(value[1]) || 0,
-				unit: defaults.unit
-			}, {
-				value: Number(value[2]) || 0,
-				unit: defaults.unit
-			}];
+			
+			result = [Pohyb.read(value[0]), Pohyb.read(value[1]), Pohyb.read(value[2])];
 
 			return result;
 			
 		},
-		set: function () {
-			arguments[1].style[arguments[0]] = "rgb(" + Math.round(arguments[2][0].value) + ", " + Math.round(arguments[2][1].value) + ", " + Math.round(arguments[2][2].value) + ")";
+		set: function (attribute, element, value) {
+			return "rgb(" + Math.round(Pohyb.write(value[0])) + ", " + Math.round(Pohyb.write(value[1])) + ", " + Math.round(Pohyb.write(value[2])) + ")";
 		},
-		parse: function () {
-			var a = arguments[1], parsed;
+		parse: function (empty, value) {
 
-			if (arguments[1].indexOf("#") > -1) {
+			if (value.indexOf("#") > -1) {
 
-				a = Number("0x" + a.split("#")[1]);
+				result = Number("0x" + value.split("#")[1]);
 
-				parsed = [(a & 0xFF0000)>>16, (a & 0xFF00)>>8, a & 0xFF];
+				parsed = [(result & 0xFF0000)>>16, (result & 0xFF00)>>8, result & 0xFF];
 
 			}
 
-			if (arguments[1].indexOf("rgb") > -1) {
-				a = a.split("(")[1].split(")")[0].split(",");
+			if (value.indexOf("rgb") > -1) {
+				value = value.split("(")[1].split(")")[0].split(",");
 
-				parsed = [Number(a[0]), Number(a[1]), Number(a[2])];
+				parsed = [Number(value[0]), Number(value[1]), Number(value[2])];
 			}
 
 			return [
-				{value: parsed[0], unit: defaults.unit},
-				{value: parsed[1], unit: defaults.unit},
-				{value: parsed[2], unit: defaults.unit}
+				Pohyb.read(parsed[0]),
+				Pohyb.read(parsed[1]),
+				Pohyb.read(parsed[2])
 			];
 		}
 	});
@@ -77,8 +64,7 @@
 
       				console.log(iClr);
 
-      				return "rgb("+(iClr & 0xFF)+","+((iClr & 0xFF00)>>8)+","+
-      					((iClr & 0xFF0000)>>16)+")";
+      				return "rgb(" + (iClr & 0xFF) + "," + ((iClr & 0xFF00)>>8) + "," + ((iClr & 0xFF0000)>>16)+")";
   				})(elem);
 
 		} else if (elem.style[name]) {

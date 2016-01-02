@@ -1,31 +1,32 @@
 (function (Pohyb, undefined) {
 	if (!Pohyb) return;
-
-	var defaults = {
-		unit: "px"
-	}
+	
+	var defaultUnit = "px",
+		value,
+		result;
 
 	Pohyb.addParametersFunctions("offset", {
-		get: function () {
+		get: function (attribute, element) {
 
-			var name = arguments[0].split("");
+			var name = attribute.split("");
 			name[0] = name[0].toUpperCase();
 			name = "offset" + name.join("");
 
-			var result = [{value: arguments[1][name] || 0, unit: defaults.unit}];
+			var result = [Pohyb.read(element[name], defaultUnit)];
 
 			return result;
 		},
-		set: function () {
-			arguments[1].style[arguments[3]] = arguments[2][0].value + arguments[2][0].unit;
+		set: function (attribute, element, value) {
+
+			return Pohyb.write(value[0]);
+
 		},
-		parse: function () {
-			var a = arguments[1];
+		parse: function (empty, value) {
 
-			if (typeof a === "array") return [{value: a[0], unit: defaults.unit}];
-			if (typeof a === "string") return [{value: Number(a.split("px")[0]), unit: defaults.unit}];
+			if (typeof value === "array") return [Pohyb.read(value[0], defaultUnit)];
+			if (typeof value === "string") return [Pohyb.read(Pohyb.split(value[0], defaultUnit, 0), defaultUnit)];
 
-			return [{value: a, unit: defaults.unit}];
+			return [Pohyb.read(value, defaultUnit)];
 		}
 	});
 	
