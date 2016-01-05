@@ -376,8 +376,6 @@
 
 	Pohyb.get = function (symbol, params) {
 
-		var o = {};
-
 		var o = {}, binds = [], bindsName = [];
 
 		for (var key in Parameters.maps) {

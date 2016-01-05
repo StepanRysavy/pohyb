@@ -1,7 +1,7 @@
 (function (Pohyb, undefined) {
 	if (!Pohyb) return;
 
-	var lib = window.Basic = window.Basic = {};
+	var lib = window.Basic = window.Basic || {};
 
 	lib.linear = Pohyb.addEasing("linear", function (from, to, progress, config) {
 

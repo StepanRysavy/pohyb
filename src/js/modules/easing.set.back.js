@@ -1,7 +1,7 @@
 (function (Pohyb, undefined) {
 	if (!Pohyb) return;
 
-	var lib = window.Back = window.Back = {};
+	var lib = window.Back = window.Back || {};
 
 	lib.easeOut = Pohyb.addEasing("backOut", function (from, to, progress, config) {
 		var defaults = {
