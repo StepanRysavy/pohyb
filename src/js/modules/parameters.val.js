@@ -21,7 +21,7 @@
 		},
 		parse: function (empty, value) {
 
-			if (typeof value === "array") return [Pohyb.read(value[0])];
+			if (typeof value === "string") return [Pohyb.additive(value, defaultUnit)];
 
 			return [Pohyb.read(value)];
 		}

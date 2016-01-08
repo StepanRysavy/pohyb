@@ -13,11 +13,14 @@
 			value = Pohyb.computed(element, attribute);
 			position = Pohyb.computed(element, "position");
 
-			if (position === "static" && ["left", "right", "top", "bottom"].indexOf(attribute) > -1) element.style["position"] = "relative";
+			if (position === "static" && ["left", "right", "top", "bottom"].indexOf(attribute) > -1) {
+				element.style["position"] = "relative";
+				value = "0px";
+			}
 
 			result = Pohyb.split(value, defaultUnit, 0);
 			result = Pohyb.read(result, defaultUnit);
-			result = [result]
+			result = [result];
 
 			return result;
 			
@@ -27,8 +30,7 @@
 		},
 		parse: function (empty, value) {
 
-			if (typeof value === "array") return [Pohyb.read(value[0], defaultUnit)];
-			if (typeof value === "string") return [Pohyb.read(Pohyb.split(value[0], defaultUnit, 0), defaultUnit)];
+			if (typeof value === "string") return [Pohyb.additive(value, defaultUnit)];
 
 			return [Pohyb.read(value, defaultUnit)];
 		}

@@ -142,7 +142,7 @@
 
 		if (Pohyb.__now > animation.timeStart + animation.duration) {
 
-			Pohyb.set(animation.of, Pohyb.parse(animation.settings.to, animation.of, false));
+			Pohyb.set(animation.of, animation.values.to);
 
 			if (animation.onComplete) animation.onComplete();
 			
@@ -162,15 +162,30 @@
 
 				if (animation.onStart) animation.onStart();
 
-				animation.values.from = Pohyb.parse(animation.settings.from, animation.of, true) || Pohyb.get(animation.of, animation.settings.to);
-				animation.values.to = Pohyb.parse(animation.settings.to, animation.of, true) || Pohyb.get(animation.of, animation.settings.from);
-				animation.values.now = {};
-				
-				var backup = Pohyb.get(animation.of, animation.settings.to);
+				var of = animation.of;
+
+				var settingsTo = animation.settings.to;
+				var settingsFrom = animation.settings.from;
+
+				var parseTo = settingsTo ? Pohyb.parse(settingsTo, of, true) : undefined;
+				var parseFrom = settingsFrom ? Pohyb.parse(settingsFrom, of, true) : undefined;
+
+				var backupTo = settingsTo ? Pohyb.get(of, settingsTo) : undefined;
+				var backupFrom = settingsFrom ? Pohyb.get(of, settingsFrom) : undefined;
+
+				var animationTo = animation.values.to;
+
+				if (!parseFrom) animation.values.from = backupTo;
+				if (!parseTo && !animationTo) animation.values.to = backupFrom;
+
+				if (parseFrom) animation.values.from = Pohyb.additiveApply(animationTo ? backupFrom : parseFrom, backupFrom);
+				if (parseTo && !animationTo) animation.values.to = Pohyb.additiveApply(parseTo, backupTo);
+
+				animation.values.now = {}; 
 
 				for (var key in animation.values.to) {
 					if (animation.values.to.hasOwnProperty(key)) {
-						animation.values.now[key] = animation.values.from ? animation.values.from[key] : backup[key];
+						animation.values.now[key] = animation.values.from ? animation.values.from[key] : backupTo[key];
 					}
 				}
 
@@ -233,21 +248,31 @@
 
 	Pohyb.__create = function (symbol, time, from, to, now) {
 
+		if (from === undefined && to === undefined) return;
+
 		if (Pohyb.tweens.length === 0) {
 			R(Pohyb.__tick);
 		}
 
+		var animation = {
+			values: {}, 
+			settings: {}
+		};
+
 		if (to === undefined) {
-			to = Pohyb.get(symbol, from);			
+
+			to = {};
+
 			if (from.ease) to.ease = from.ease;
 			if (from.delay) to.delay = from.delay; 
-		}
 
-		if (from !== undefined) {
-			Pohyb.set(symbol, from);
-		}
+			var a = Pohyb.get(symbol, from);
+			var c = Pohyb.additiveApply (Pohyb.parse(from, symbol), Pohyb.get(symbol, from));
 
-		var animation = {};
+			Pohyb.set(symbol, c);
+			animation.values.to = a;
+
+		}
 
 		animation.of = symbol;
 		animation.time = time;
@@ -295,9 +320,6 @@
 			animation.ease = Pohyb.__defaultEasing();
 		}
 
-		animation.values = {};
-
-		animation.settings = {};
 		animation.settings.from = from;
 		animation.settings.to = to; 
 
@@ -436,7 +458,7 @@
 	}
 
 	Pohyb.read = function (value, defaultUnit) {
-		return {value: Number(value), unit: defaultUnit || undefined};
+		return {value: Number(value), unit: defaultUnit || undefined, add: false};
 	}
 
 	Pohyb.write = function (obj) {
@@ -451,6 +473,45 @@
 		}
 	}
 
+	Pohyb.additive = function (value, defaultUnit) {
+
+		value = [value.substring(0, 1), value.substring(1)];
+
+		var result = Pohyb.read(value[1], defaultUnit, 0);
+
+		result.add = true;
+
+		if (value[0] === "-") result.value *= -1;
+
+		return result;
+	}
+
+	Pohyb.additiveApply = function (parse, backup) {
+
+		var value = {};
+
+		for (var key in parse) {
+			if (parse.hasOwnProperty(key)) {
+
+				value[key] = [];
+
+				for (var i=0; i<parse[key].length; i++) {
+					if (parse[key][i].add) {
+
+						parse[key][i].value = backup[key][i].value + parse[key][i].value;
+						parse[key][i].add = false;
+
+					} 
+
+					value[key].push(parse[key][i]);
+				}
+			}
+		}
+
+		return value;
+
+	}
+
 	window.Pohyb = window.Tween = {
 		to: Pohyb.to,
 		from: Pohyb.from,
@@ -462,6 +523,7 @@
 		read: Pohyb.read,
 		write: Pohyb.write,
 		split: Pohyb.split,
+		additive: Pohyb.additive,
 
 		offset: Pohyb.offset,
 

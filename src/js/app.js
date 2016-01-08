@@ -12,8 +12,9 @@
     };
 
     var tl = new Cas();
-    tl.to($(".square"), 1, {left: 100, width: 200, opacity: .5, margin: 10});
-    tl.to($(".square"), 1, {borderTopColor: "#00ff00", marginTop: 20}); 
+    tl.from($(".square"), 1, {left: "+100", opacity: "-.4", margin: 10});
+    tl.to($(".square"), 1, {left: 200, width: 200, opacity: .5, margin: 10});
+    tl.to($(".square"), 1, {borderTopColor: "#00ff00", marginTop: 20, left: "-100", opacity: "+.4"}); 
     tl.to($(".text"), 1, {color: "#ff0000"}); 
 
     tl.to($(".transformator"), 1, {opacity: .5}); 
