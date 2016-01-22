@@ -12,12 +12,12 @@
     };
 
     var tl = new Cas();
-    tl.from($(".square"), 1, {left: "+100", opacity: "-.4", margin: 10});
+    tl.from($(".square"), 1, {delay: 1, left: "+100", opacity: "-.4", margin: 10});
     tl.to($(".square"), 1, {left: 200, width: 200, opacity: .5, margin: 10});
     tl.to($(".square"), 1, {borderTopColor: "#00ff00", marginTop: 20, left: "-100", opacity: "+.4"}); 
     tl.to($(".text"), 1, {color: "#ff0000"}); 
 
-    tl.to($(".transformator"), 1, {opacity: .5}); 
+    tl.to($(".transformator"), 1, {opacity: .5, delay: 1}); 
     tl.to($(".transformator"), 1, {scaleX: 2}); 
     tl.to($(".transformator"), 1, {rotate: -10});
     tl.to($(".transformator"), 1, {scale: 2});

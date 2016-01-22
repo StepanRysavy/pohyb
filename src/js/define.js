@@ -345,8 +345,9 @@
 			animation.suspend = false;
 		};
 
-		animation.offset = function (offset) {
-			animation.timeStart += offset * 1000;
+		animation.newStartTime = function (time) {
+			animation.timeStart = time;
+			return animation;
 		};
 
 		return animation;

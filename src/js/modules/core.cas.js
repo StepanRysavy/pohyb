@@ -13,20 +13,28 @@
 		var api = {
 			offset: function (animation, offset) {
 
-				offset = offset || 0;
+				var _offset = offset || 0;
 
 				if (continous === true && tweens.length > 0) {
 
 					previous = tweens[tweens.length - 1];
 
-					offset = (previous.timeStart - animation.timeStart + previous.duration) / 1000 + offset - animation.delay;
+					var previousTime = previous.timeStart + previous.duration;
+
+					_offset = previousTime + (_offset * 1000) + ((animation.delay || 0) * 1000);
+
+				} else {
+
+					_offset = animation.timeStart + ((animation.delay || 0) * 1000);
 
 				}
 
-				animation.offset(offset);
+				animation.newStartTime(_offset);
+
+				return animation;
 			},
 			setup: function (animation, offset) {
-				api.offset(animation, offset);
+				animation = api.offset(animation, offset);
 				tweens.push(animation);
 			},
 			to: function (symbol, time, to, offset) {
